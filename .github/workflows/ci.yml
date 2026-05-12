@@ -2,6 +2,9 @@ name: Moodle Plugin CI
 
 on: [push, pull_request]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -36,7 +39,7 @@ jobs:
 
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4  # FIX: v5 dès qu'il sera disponible (Node.js 24 requis après juin 2026)
+        uses: actions/checkout@v4
         with:
           path: plugin
 
@@ -54,6 +57,8 @@ jobs:
           echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> $GITHUB_ENV
+        env:
+          COMPOSER_AUTH: '{}'
 
       - name: Install moodle-plugin-ci
         run: moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
