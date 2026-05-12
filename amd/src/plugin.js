@@ -819,14 +819,30 @@ function openImageIADialog(editor, apiKey) {
             revised: 'imageia-revised', btn: 'imageia-generate',
         };
         const el = {};
-        Object.keys(ids).forEach((k) => { el[k] = document.getElementById(ids[k]); });
-        if (el.result) { el.result.style.display = 'block'; }
-        if (el.loading) { el.loading.style.display = 'block'; }
-        if (el.loadingLbl) { el.loadingLbl.style.color = modelData[modelKey].badgeColor; }
-        if (el.error) { el.error.style.display = 'none'; }
-        if (el.img) { el.img.style.display = 'none'; }
-        if (el.actions) { el.actions.style.display = 'none'; }
-        if (el.revised) { el.revised.style.display = 'none'; }
+        Object.keys(ids).forEach((k) => {
+            el[k] = document.getElementById(ids[k]);
+        });
+        if (el.result) {
+            el.result.style.display = 'block';
+        }
+        if (el.loading) {
+            el.loading.style.display = 'block';
+        }
+        if (el.loadingLbl) {
+            el.loadingLbl.style.color = modelData[modelKey].badgeColor;
+        }
+        if (el.error) {
+            el.error.style.display = 'none';
+        }
+        if (el.img) {
+            el.img.style.display = 'none';
+        }
+        if (el.actions) {
+            el.actions.style.display = 'none';
+        }
+        if (el.revised) {
+            el.revised.style.display = 'none';
+        }
         if (el.btn) {
             el.btn.disabled = true;
             el.btn.style.opacity = '0.65';
@@ -842,7 +858,9 @@ function openImageIADialog(editor, apiKey) {
     function resetLoadingState(fallbackModel) {
         const loadingDiv = document.getElementById('imageia-loading');
         const genBtn = document.getElementById('imageia-generate');
-        if (loadingDiv) { loadingDiv.style.display = 'none'; }
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
         if (genBtn) {
             const cm = wrapper.querySelector('input[name="imageia-model"]:checked');
             genBtn.disabled = false;
@@ -862,9 +880,16 @@ function openImageIADialog(editor, apiKey) {
         const downloadA = document.getElementById('imageia-download');
         const actionsDiv = document.getElementById('imageia-actions');
         const revisedEl = document.getElementById('imageia-revised');
-        if (imgEl) { imgEl.src = src; imgEl.style.display = 'block'; }
-        if (downloadA) { downloadA.href = src; }
-        if (actionsDiv) { actionsDiv.style.display = 'flex'; }
+        if (imgEl) {
+            imgEl.src = src;
+            imgEl.style.display = 'block';
+        }
+        if (downloadA) {
+            downloadA.href = src;
+        }
+        if (actionsDiv) {
+            actionsDiv.style.display = 'flex';
+        }
         if (revisedPrompt && revisedEl) {
             revisedEl.style.display = 'block';
             revisedEl.textContent = `${S.revised_prompt} "${revisedPrompt.substring(0, 140)}..."`;
@@ -878,8 +903,14 @@ function openImageIADialog(editor, apiKey) {
      */
     async function generate() {
         const prompt = promptTA ? promptTA.value.trim() : '';
-        if (!prompt) { window.console.warn(S.error_noprompt); return; }
-        if (!apiKey) { window.console.warn(S.error_noapikey); return; }
+        if (!prompt) {
+            window.console.warn(S.error_noprompt);
+            return;
+        }
+        if (!apiKey) {
+            window.console.warn(S.error_noapikey);
+            return;
+        }
 
         const modelInput = wrapper.querySelector('input[name="imageia-model"]:checked');
         const sizeEl = document.getElementById('imageia-size');
@@ -890,8 +921,15 @@ function openImageIADialog(editor, apiKey) {
 
         setLoadingState(m, modelInfo);
 
-        const requestBody = {model: m, prompt: prompt, n: 1, size: size, quality: quality};
-        requestBody.response_format = 'b64_json';
+        const responseFormat = 'b64_json';
+        const requestBody = {
+            model: m,
+            prompt: prompt,
+            n: 1,
+            size: size,
+            quality: quality,
+        };
+        requestBody['response_format'] = responseFormat;
 
         try {
             const resp = await fetch('https://api.openai.com/v1/images/generations', {
