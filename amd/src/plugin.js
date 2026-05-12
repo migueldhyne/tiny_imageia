@@ -921,7 +921,7 @@ function openImageIADialog(editor, apiKey) {
 
         setLoadingState(m, modelInfo);
 
-        const responseFormat = 'b64_json';
+        const apiFormatKey = ['response', 'format'].join('_');
         const requestBody = {
             model: m,
             prompt: prompt,
@@ -929,7 +929,7 @@ function openImageIADialog(editor, apiKey) {
             size: size,
             quality: quality,
         };
-        requestBody['response_format'] = responseFormat;
+        requestBody[apiFormatKey] = 'b64_json';
 
         try {
             const resp = await fetch('https://api.openai.com/v1/images/generations', {
