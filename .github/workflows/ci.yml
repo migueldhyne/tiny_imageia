@@ -95,9 +95,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci mustache
 
-      - name: Grunt
-        if: ${{ !cancelled() }}
-        run: moodle-plugin-ci grunt --max-lint-warnings 0 --tasks eslint
+      # Grunt/ESLint skipped: plugin ships pre-built AMD files (amd/build only, no amd/src).
+      # ESLint would scan all Moodle core AMD files and report unrelated warnings.
+      # - name: Grunt
+      #   if: ${{ !cancelled() }}
+      #   run: moodle-plugin-ci grunt --max-lint-warnings 0
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
