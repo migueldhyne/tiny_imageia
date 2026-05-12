@@ -671,7 +671,14 @@ function runSimulator() {
     const perWeek = teachers * images * costPerImage;
     const perMonth = perWeek * (weeks / 12);
     const perYear = perWeek * weeks;
-    const color = perYear < 50 ? '#059669' : perYear < 200 ? '#d97706' : '#dc2626';
+    let color;
+    if (perYear < 50) {
+        color = '#059669';
+    } else if (perYear < 200) {
+        color = '#d97706';
+    } else {
+        color = '#dc2626';
+    }
     const cap = (perMonth * 1.3).toFixed(2);
     const tip = S.sim_tip.replace('{$a}', `$${cap}`);
     resultEl.style.display = 'block';
@@ -798,16 +805,82 @@ function openImageIADialog(editor, apiKey) {
      *
      * @returns {Promise<void>}
      */
+    /**
+     * Set UI into loading state.
+     *
+     * @param {string} modelKey Selected model key.
+     * @param {Object} modelData Model info object.
+     */
+    function setLoadingState(modelKey, modelData) {
+        const ids = {
+            result: 'imageia-result', loading: 'imageia-loading',
+            loadingLbl: 'loading-label', error: 'imageia-error',
+            img: 'imageia-img', actions: 'imageia-actions',
+            revised: 'imageia-revised', btn: 'imageia-generate',
+        };
+        const el = {};
+        Object.keys(ids).forEach((k) => { el[k] = document.getElementById(ids[k]); });
+        if (el.result) { el.result.style.display = 'block'; }
+        if (el.loading) { el.loading.style.display = 'block'; }
+        if (el.loadingLbl) { el.loadingLbl.style.color = modelData[modelKey].badgeColor; }
+        if (el.error) { el.error.style.display = 'none'; }
+        if (el.img) { el.img.style.display = 'none'; }
+        if (el.actions) { el.actions.style.display = 'none'; }
+        if (el.revised) { el.revised.style.display = 'none'; }
+        if (el.btn) {
+            el.btn.disabled = true;
+            el.btn.style.opacity = '0.65';
+            el.btn.textContent = S.generating;
+        }
+    }
+
+    /**
+     * Reset UI after API call.
+     *
+     * @param {string} fallbackModel Fallback model key.
+     */
+    function resetLoadingState(fallbackModel) {
+        const loadingDiv = document.getElementById('imageia-loading');
+        const genBtn = document.getElementById('imageia-generate');
+        if (loadingDiv) { loadingDiv.style.display = 'none'; }
+        if (genBtn) {
+            const cm = wrapper.querySelector('input[name="imageia-model"]:checked');
+            genBtn.disabled = false;
+            genBtn.style.opacity = '1';
+            genBtn.textContent = S.generate_btn.replace('{$a}', cm ? cm.value : fallbackModel);
+        }
+    }
+
+    /**
+     * Update UI with successful image generation result.
+     *
+     * @param {string} src Base64 image data URL.
+     * @param {string|undefined} revisedPrompt Revised prompt from OpenAI.
+     */
+    function handleSuccess(src, revisedPrompt) {
+        const imgEl = document.getElementById('imageia-img');
+        const downloadA = document.getElementById('imageia-download');
+        const actionsDiv = document.getElementById('imageia-actions');
+        const revisedEl = document.getElementById('imageia-revised');
+        if (imgEl) { imgEl.src = src; imgEl.style.display = 'block'; }
+        if (downloadA) { downloadA.href = src; }
+        if (actionsDiv) { actionsDiv.style.display = 'flex'; }
+        if (revisedPrompt && revisedEl) {
+            revisedEl.style.display = 'block';
+            revisedEl.textContent = `${S.revised_prompt} "${revisedPrompt.substring(0, 140)}..."`;
+        }
+    }
+
+    /**
+     * Call the OpenAI API and update the UI.
+     *
+     * @returns {Promise<void>}
+     */
     async function generate() {
         const prompt = promptTA ? promptTA.value.trim() : '';
-        if (!prompt) {
-            window.console.warn(S.error_noprompt);
-            return;
-        }
-        if (!apiKey) {
-            window.console.warn(S.error_noapikey);
-            return;
-        }
+        if (!prompt) { window.console.warn(S.error_noprompt); return; }
+        if (!apiKey) { window.console.warn(S.error_noapikey); return; }
+
         const modelInput = wrapper.querySelector('input[name="imageia-model"]:checked');
         const sizeEl = document.getElementById('imageia-size');
         const qualEl = document.getElementById('imageia-quality');
@@ -815,51 +888,10 @@ function openImageIADialog(editor, apiKey) {
         const size = sizeEl ? sizeEl.value : '1024x1024';
         const quality = qualEl ? qualEl.value : 'medium';
 
-        const resultDiv = document.getElementById('imageia-result');
-        const loadingDiv = document.getElementById('imageia-loading');
-        const loadingLbl = document.getElementById('loading-label');
-        const errorDiv = document.getElementById('imageia-error');
-        const imgEl = document.getElementById('imageia-img');
-        const actionsDiv = document.getElementById('imageia-actions');
-        const genBtn = document.getElementById('imageia-generate');
-        const revisedEl = document.getElementById('imageia-revised');
-        const downloadA = document.getElementById('imageia-download');
+        setLoadingState(m, modelInfo);
 
-        if (resultDiv) {
-            resultDiv.style.display = 'block';
-        }
-        if (loadingDiv) {
-            loadingDiv.style.display = 'block';
-        }
-        if (loadingLbl) {
-            loadingLbl.style.color = modelInfo[m].badgeColor;
-        }
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-        }
-        if (imgEl) {
-            imgEl.style.display = 'none';
-        }
-        if (actionsDiv) {
-            actionsDiv.style.display = 'none';
-        }
-        if (revisedEl) {
-            revisedEl.style.display = 'none';
-        }
-        if (genBtn) {
-            genBtn.disabled = true;
-            genBtn.style.opacity = '0.65';
-            genBtn.textContent = S.generating;
-        }
-
-        const requestBody = {
-            model: m,
-            prompt: prompt,
-            n: 1,
-            size: size,
-            quality: quality,
-            response_format: 'b64_json',
-        };
+        const requestBody = {model: m, prompt: prompt, n: 1, size: size, quality: quality};
+        requestBody.response_format = 'b64_json';
 
         try {
             const resp = await fetch('https://api.openai.com/v1/images/generations', {
@@ -872,43 +904,20 @@ function openImageIADialog(editor, apiKey) {
             });
             const data = await resp.json();
             if (!resp.ok) {
-                const msg = data.error ? data.error.message : `API error ${resp.status}`;
-                throw new Error(msg);
+                throw new Error(data.error ? data.error.message : `API error ${resp.status}`);
             }
-            const src = `data:image/png;base64,${data.data[0].b64_json}`;
-            if (imgEl) {
-                imgEl.src = src;
-                imgEl.style.display = 'block';
-            }
-            if (downloadA) {
-                downloadA.href = src;
-            }
-            if (actionsDiv) {
-                actionsDiv.style.display = 'flex';
-            }
-            const rev = data.data[0].revised_prompt;
-            if (rev && revisedEl) {
-                revisedEl.style.display = 'block';
-                revisedEl.textContent = `${S.revised_prompt} "${rev.substring(0, 140)}..."`;
-            }
+            handleSuccess(
+                `data:image/png;base64,${data.data[0].b64_json}`,
+                data.data[0].revised_prompt
+            );
         } catch (err) {
+            const errorDiv = document.getElementById('imageia-error');
             if (errorDiv) {
-                errorDiv.textContent = `${S.error_prefix} ${err.message} — ${S.error_apihint}`;
+                errorDiv.textContent = `${S.error_prefix} ${err.message}`;
                 errorDiv.style.display = 'block';
             }
         } finally {
-            if (loadingDiv) {
-                loadingDiv.style.display = 'none';
-            }
-            if (genBtn) {
-                genBtn.disabled = false;
-                genBtn.style.opacity = '1';
-                const currentModel = wrapper.querySelector(
-                    'input[name="imageia-model"]:checked'
-                );
-                const cm = currentModel ? currentModel.value : m;
-                genBtn.textContent = S.generate_btn.replace('{$a}', cm);
-            }
+            resetLoadingState(m);
         }
     }
 
@@ -974,16 +983,16 @@ const setupCommands = (editor) => {
     });
 };
 
-export default new Promise((resolve) => {
-    Promise.all([
-        getTinyMCE(),
-        getPluginMetadata(component, pluginName),
-    ]).then(([tinyMCE, pluginMetadata]) => {
-        tinyMCE.PluginManager.add(pluginName, (editor) => {
-            registerOptions(editor);
-            setupCommands(editor);
-            return pluginMetadata;
-        });
-        resolve([pluginName, Configuration]);
+const initPromise = Promise.all([
+    getTinyMCE(),
+    getPluginMetadata(component, pluginName),
+]).then(([tinyMCE, pluginMetadata]) => {
+    tinyMCE.PluginManager.add(pluginName, (editor) => {
+        registerOptions(editor);
+        setupCommands(editor);
+        return pluginMetadata;
     });
+    return [pluginName, Configuration];
 });
+
+export default initPromise;
