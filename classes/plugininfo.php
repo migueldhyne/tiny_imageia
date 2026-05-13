@@ -81,6 +81,8 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
 
     /**
      * Returns plugin configuration for a given context.
+     * The API key is intentionally NOT transmitted to the browser.
+     * The JS calls the server-side proxy endpoint instead.
      *
      * @param context $context
      * @param array $options
@@ -94,8 +96,11 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
         array $fpoptions,
         ?editor $editor = null
     ): array {
+        global $CFG;
+        $configured = !empty(get_config('tiny_imageia', 'apikey'));
         return [
-            'apikey' => (string) get_config('tiny_imageia', 'apikey'),
+            'configured' => $configured ? '1' : '0',
+            'proxyurl'   => $CFG->wwwroot . '/lib/editor/tiny/plugins/imageia/generate.php',
         ];
     }
 }
