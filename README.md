@@ -1,159 +1,130 @@
-# tiny_imageia — AI Image Generator for Moodle TinyMCE
-
-**Version:** 1.1.0 | **Updated:** May 12, 2026 | **Author:** Miguël Dhyne <miguel.dhyne@gmail.com>
-**License:** GNU GPL v3 or later | **Requires:** Moodle 4.3+, TinyMCE editor
+# tiny_imageia — Plugin TinyMCE pour Moodle 4.5+
+## Générateur d'images pédagogiques IA (OpenAI DALL-E)
 
 ---
 
-## Overview
+## 📋 Description
 
-`tiny_imageia` adds an AI-powered image generation button directly into the TinyMCE toolbar in Moodle. Teachers can generate pedagogical images (diagrams, infographics, illustrations) using OpenAI's image generation API and insert them instantly into any course content — without leaving the editor.
+Ce plugin ajoute un bouton **🖼️ Image IA** dans la barre d'outils TinyMCE de Moodle.
+Il permet aux enseignants de :
 
----
-
-## ⚠️ A Note on AI Models (as of May 12, 2026)
-
-This plugin currently supports **two OpenAI image generation models**. OpenAI regularly releases new and improved models, so the recommendations below reflect the best available options **at the time of this release**. If you are reading this at a later date, we recommend checking [platform.openai.com](https://platform.openai.com) for newer models that may have superseded those listed here.
-
-### gpt-image-2 ✨ *(Recommended as of May 2026)*
-
-OpenAI's most capable image generation model at the time of this release. It represents a significant step forward from DALL-E 3 and is the **recommended choice for educational use**.
-
-**Strengths:**
-- Accurate text rendering inside images (labels, arrows, captions)
-- Complex infographics and scientific diagrams
-- High-fidelity photorealism
-- Flexible output sizes up to 2K resolution
-
-**Quality levels:** `low` (drafts) · `medium` (recommended) · `high` (dense text, fine detail)
-
-**Estimated cost per image (1024×1024):**
-| Quality | Cost |
-|---------|------|
-| low | ≈ $0.006 |
-| medium | ≈ $0.053 |
-| high | ≈ $0.211 |
+- **Choisir** un prompt dans une banque de +30 prompts pédagogiques prêts à l'emploi
+  (Sciences, Histoire-Géo, Langues, Maths, Arts, Informatique)
+- **Modifier** le prompt avant envoi
+- **Écrire** leur propre prompt libre
+- **Générer** l'image via l'API OpenAI (DALL-E 3)
+- **Insérer** l'image directement dans l'éditeur Moodle
+- **Télécharger** l'image générée
 
 ---
 
-### DALL-E 3 *(Classic — stable and well-documented)*
+## ⚙️ Prérequis
 
-The previous generation model from OpenAI. Still reliable and widely used, with a strong community of prompt examples. Best suited for artistic illustrations and narrative scenes rather than technical diagrams.
-
-**Strengths:**
-- Artistic and creative illustrations
-- Narrative scenes and atmospheric images
-- Varied styles: watercolor, sketch, cartoon
-- Large community, extensive documentation
-
-**Limitations compared to gpt-image-2:**
-- Less accurate text rendering inside images
-- Lower performance on dense infographics
-- Fewer size options (1024×1024, 1792×1024, 1024×1792 only)
-
-**Quality levels:** `standard` · `hd`
-
-**Estimated cost per image:**
-| Quality | 1024×1024 | 1792×1024 |
-|---------|-----------|-----------|
-| standard | ≈ $0.04 | ≈ $0.08 |
-| hd | ≈ $0.08 | ≈ $0.12 |
+- Moodle **4.3 minimum** (recommandé : 4.5+)
+- Éditeur **TinyMCE** activé (pas Atto)
+- Clé API **OpenAI** avec accès payant (DALL-E 3 ≈ 0,04 $/image standard)
 
 ---
 
-## Features
+## 🚀 Installation
 
-- 🖼️ **Custom SVG icon** in the TinyMCE toolbar
-- 📚 **Prompt library** with 30+ ready-to-use pedagogical prompts across 6 subjects (Sciences, History & Geography, Languages, Mathematics, Arts, Computer Science)
-- ✏️ **Editable prompt** — select from the library or write your own, always modifiable before sending
-- 🤖 **Model selector** — switch between gpt-image-2 and DALL-E 3 with live info cards
-- 💰 **Cost transparency tab** — live cost estimate per image, budget simulator for schools
-- 💡 **Prompt tips tab** — structure guide, do/don't table, style keyword glossary
-- ✅ **Insert into editor** — one click to embed the generated image
-- ⬇️ **Download PNG** — save the image locally
-- 🔄 **Regenerate** — rerun with the same or modified prompt
+### Méthode 1 — Via l'interface Moodle (recommandée)
 
----
+1. Téléchargez le fichier ZIP du plugin
+2. Connectez-vous en tant qu'administrateur
+3. Allez dans : **Administration du site → Plugins → Installer des plugins**
+4. Déposez le fichier ZIP et cliquez **Installer le plugin**
+5. Suivez les instructions à l'écran
 
-## Installation
+### Méthode 2 — Via FTP/SSH
 
-### Method 1 — Via Moodle interface (recommended)
-1. Download `tiny_imageia.zip`
-2. Go to **Site administration → Plugins → Install plugins**
-3. Upload the ZIP file and follow the on-screen instructions
-
-### Method 2 — Via FTP/SSH
-1. Extract the ZIP
-2. Copy the `tiny_imageia` folder to:
+1. Décompressez le zip
+2. Copiez le dossier `imageia` dans :
    ```
-   /path/to/moodle/lib/editor/tiny/plugins/
+   /var/www/moodle/lib/editor/tiny/plugins/
    ```
-3. Go to **Site administration → Notifications** to complete installation
+3. Allez dans **Administration du site → Notifications** pour finaliser l'installation
 
 ---
 
-## Configuration
+## 🔧 Configuration
 
-After installation:
+Après installation :
 
-1. Go to **Site administration → Plugins → Text editors → Tiny ImageIA**
-2. Enter your **OpenAI API key** (`sk-...`) — obtain one at [platform.openai.com](https://platform.openai.com)
-3. Select the **default model** (gpt-image-2 recommended)
-4. Save settings
+1. **Administration du site → Plugins → Éditeurs de texte → ImageIA pédagogique**
+2. Renseignez votre **Clé API OpenAI** (`sk-...`)
+3. Choisissez le modèle (DALL-E 3 recommandé) et la taille par défaut
+4. Sauvegardez
 
-### Add the button to the TinyMCE toolbar
+### Ajouter le bouton à la barre d'outils TinyMCE
 
-1. Go to **Site administration → Plugins → Text editors → TinyMCE editor → General settings**
-2. Add `tiny_imageia` to the desired toolbar row, e.g.:
-   ```
-   bold italic | tiny_imageia | image media
-   ```
+1. **Administration du site → Plugins → Éditeurs de texte → TinyMCE → Paramètres généraux**
+2. Dans la configuration de la barre d'outils, ajoutez `tiny_imageia` à la ligne souhaitée
+   Exemple : `bold italic | tiny_imageia | image media`
 
 ---
 
-## Usage
+## 🎓 Utilisation
 
-1. Open any TinyMCE editor in Moodle (page, activity, resource…)
-2. Click the **🖼️ star icon** in the toolbar
-3. In the dialog:
-   - Select a prompt from the dropdown library, or write your own
-   - Modify the prompt if needed
-   - Choose image size and quality
-   - Click **🚀 Generate**
-4. Once the image appears:
-   - **✅ Insert into editor** — embeds the image directly
-   - **⬇️ Download PNG** — saves the file locally
-   - **🔄 Regenerate** — generates a new variation
-
----
-
-## Cost Management
-
-Costs are billed by OpenAI directly on your API key. Recommended practices:
-
-- Start with **low** quality to test prompts, then switch to **medium** for the final version
-- Use the **built-in budget simulator** (💰 tab in the dialog) to estimate monthly costs for your institution
-- Set a **monthly spending cap** in your OpenAI dashboard at [platform.openai.com → Settings → Limits](https://platform.openai.com)
-- **medium** quality is sufficient for 90% of pedagogical use cases
+1. Ouvrez n'importe quel éditeur TinyMCE dans Moodle (page, activité, ressource…)
+2. Cliquez sur le bouton **🖼️** dans la barre d'outils
+3. Dans la fenêtre :
+   - Sélectionnez un prompt dans la liste déroulante, OU
+   - Écrivez votre propre prompt
+   - Modifiez le prompt si nécessaire
+   - Choisissez la taille et la qualité
+4. Cliquez **🚀 Générer l'image**
+5. Une fois l'image apparue :
+   - **✅ Insérer dans l'éditeur** — place l'image dans votre contenu
+   - **⬇️ Télécharger** — sauvegarde le fichier PNG sur votre ordinateur
 
 ---
 
-## Privacy & Data
+## 📚 Matières couvertes dans la banque de prompts
 
-Prompts entered by users are sent to OpenAI's servers (USA) for processing. No personal data is stored locally by this plugin. **Do not include students' personal data in prompts.** Review OpenAI's privacy policy and your institution's data governance rules before enabling access for students.
+| Matière | Sujets |
+|---------|--------|
+| 🔬 Sciences | Biologie, Chimie, Physique |
+| 🗺️ Histoire-Géo | Histoire, Géographie |
+| 🗣️ Langues | Français, Anglais |
+| 📐 Mathématiques | Géométrie, Algèbre |
+| 🎨 Arts | Éducation artistique |
+| 💻 Informatique | Numérique, Cybersécurité, IA |
 
 ---
 
-## Security Note
+## 💰 Coûts API OpenAI (indicatifs, mai 2024)
 
-The OpenAI API key is stored in Moodle's plugin configuration and transmitted to the teacher's browser at runtime. For large-scale production deployments, consider implementing a server-side PHP proxy to avoid exposing the API key client-side.
+| Modèle | Qualité | Prix/image |
+|--------|---------|-----------|
+| DALL-E 3 | Standard | ~0,04 $ |
+| DALL-E 3 | HD | ~0,08 $ |
+| DALL-E 2 | Standard | ~0,02 $ |
 
 ---
 
-## Changelog
+## 🔐 Sécurité
 
-| Version | Date | Notes |
-|---------|------|-------|
-| 1.1.0 | 2026-05-12 | Custom SVG icon, full Moodle coding standards compliance |
-| 1.0.3 | 2024-12-01 | Tabs UI: Generate / Costs / Prompt tips, gpt-image-2 support |
-| 1.0.0 | 2024-12-01 | Initial release with DALL-E 3 |
+⚠️ **Important** : La clé API est stockée dans la configuration Moodle et transmise
+au navigateur de l'enseignant. Pour une sécurité maximale en production,
+il est recommandé de créer un proxy PHP côté serveur plutôt que d'appeler
+l'API OpenAI directement depuis le navigateur.
+
+---
+
+## 📄 Licence
+
+GPL v3 — Libre d'utilisation, modification et distribution.
+
+## Structure Moodle correcte
+
+Le dossier sur le disque doit s’appeler `imageia` et être placé dans `lib/editor/tiny/plugins/imageia`.
+Le composant déclaré dans `version.php` reste `tiny_imageia`.
+Ne pas installer ce plugin dans un dossier nommé `tiny_imageia`, sinon Moodle le détecte comme `tiny_tiny_imageia`.
+
+
+## Version 1.0.2
+
+- Button registered as `tiny_imageia_imageia` following Moodle TinyMCE skeleton naming.
+- Toolbar insertion moved back to the standard `content` toolbar region.
+- Menu item registered separately from the toolbar button.

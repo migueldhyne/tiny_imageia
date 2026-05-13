@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,10 +12,10 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Settings for tiny_imageia plugin.
+ * Settings for the tiny_imageia plugin.
  *
  * @package    tiny_imageia
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
@@ -31,16 +31,5 @@ if ($hassiteconfig) {
         get_string('apikey_desc', 'tiny_imageia'),
         '',
         PARAM_TEXT
-    ));
-
-    $settings->add(new admin_setting_configselect(
-        'tiny_imageia/defaultmodel',
-        get_string('defaultmodel', 'tiny_imageia'),
-        get_string('defaultmodel_desc', 'tiny_imageia'),
-        'gpt-image-2',
-        [
-            'gpt-image-2' => 'gpt-image-2 (recommande - meilleure qualite 2025)',
-            'dall-e-3'    => 'DALL-E 3 (classique - illustrations artistiques)',
-        ]
     ));
 }
