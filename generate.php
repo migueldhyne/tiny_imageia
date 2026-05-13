@@ -79,8 +79,8 @@ if ($apikey === '') {
     die(json_encode([
         'error' => 'OpenAI API key is not configured for component tiny_imageia on this Moodle site.',
         'code' => 'missing_moodle_config_apikey',
-        'hint' => 'Re-save the OpenAI API key in Site administration > Plugins > Text editors >
-        ImageIA pédagogique, then purge Moodle caches.',
+        'hint' => 'Re-save the OpenAI API key in Site administration > Plugins >
+        Text editors > ImageIA pédagogique, then purge Moodle caches.',
     ]));
 }
 
