@@ -1,130 +1,176 @@
-# tiny_imageia — Plugin TinyMCE pour Moodle 4.5+
-## Générateur d'images pédagogiques IA (OpenAI DALL-E)
+# tiny_imageia — TinyMCE plugin for Moodle 4.5+
+## Educational AI image generator using OpenAI `gpt-image-2`
 
 ---
 
 ## 📋 Description
 
-Ce plugin ajoute un bouton **🖼️ Image IA** dans la barre d'outils TinyMCE de Moodle.
-Il permet aux enseignants de :
+This plugin adds an **🖼️ AI Image** button to the Moodle TinyMCE toolbar.
+It allows teachers and course creators to generate educational images directly inside Moodle using OpenAI's `gpt-image-2` image generation model.
 
-- **Choisir** un prompt dans une banque de +30 prompts pédagogiques prêts à l'emploi
-  (Sciences, Histoire-Géo, Langues, Maths, Arts, Informatique)
-- **Modifier** le prompt avant envoi
-- **Écrire** leur propre prompt libre
-- **Générer** l'image via l'API OpenAI (DALL-E 3)
-- **Insérer** l'image directement dans l'éditeur Moodle
-- **Télécharger** l'image générée
+The plugin lets users:
+
+- **Choose** a prompt from a bank of 30+ ready-to-use educational prompts
+  (Science, History and Geography, Languages, Mathematics, Arts, Computing)
+- **Edit** the selected prompt before sending it
+- **Write** a custom prompt
+- **Generate** an image through the OpenAI API using `gpt-image-2` only
+- **Insert** the generated image directly into the Moodle editor
+- **Download** the generated image as a PNG file
 
 ---
 
-## ⚙️ Prérequis
+## ⚙️ Requirements
 
-- Moodle **4.3 minimum** (recommandé : 4.5+)
-- Éditeur **TinyMCE** activé (pas Atto)
-- Clé API **OpenAI** avec accès payant (DALL-E 3 ≈ 0,04 $/image standard)
+- Moodle **4.3 minimum**; Moodle **4.5+** is recommended
+- The **TinyMCE** editor enabled; this plugin is not for Atto
+- A paid **OpenAI API key** with access to image generation
+- PHP cURL enabled on the Moodle server
 
 ---
 
 ## 🚀 Installation
 
-### Méthode 1 — Via l'interface Moodle (recommandée)
+### Method 1 — Moodle web interface, recommended
 
-1. Téléchargez le fichier ZIP du plugin
-2. Connectez-vous en tant qu'administrateur
-3. Allez dans : **Administration du site → Plugins → Installer des plugins**
-4. Déposez le fichier ZIP et cliquez **Installer le plugin**
-5. Suivez les instructions à l'écran
+1. Download the plugin ZIP file.
+2. Log in as a Moodle administrator.
+3. Go to **Site administration → Plugins → Install plugins**.
+4. Upload the ZIP file and click **Install plugin**.
+5. Follow the on-screen installation steps.
 
-### Méthode 2 — Via FTP/SSH
+### Method 2 — FTP or SSH
 
-1. Décompressez le zip
-2. Copiez le dossier `imageia` dans :
+1. Unzip the archive.
+2. Copy the `imageia` folder to:
    ```
    /var/www/moodle/lib/editor/tiny/plugins/
    ```
-3. Allez dans **Administration du site → Notifications** pour finaliser l'installation
+3. Go to **Site administration → Notifications** to complete the installation.
 
 ---
 
 ## 🔧 Configuration
 
-Après installation :
+After installation:
 
-1. **Administration du site → Plugins → Éditeurs de texte → ImageIA pédagogique**
-2. Renseignez votre **Clé API OpenAI** (`sk-...`)
-3. Choisissez le modèle (DALL-E 3 recommandé) et la taille par défaut
-4. Sauvegardez
+1. Go to **Site administration → Plugins → Text editors → Educational ImageIA**.
+2. Enter your **OpenAI API key** (`sk-...`).
+3. Save the settings.
 
-### Ajouter le bouton à la barre d'outils TinyMCE
+### Add the button to the TinyMCE toolbar
 
-1. **Administration du site → Plugins → Éditeurs de texte → TinyMCE → Paramètres généraux**
-2. Dans la configuration de la barre d'outils, ajoutez `tiny_imageia` à la ligne souhaitée
-   Exemple : `bold italic | tiny_imageia | image media`
+1. Go to **Site administration → Plugins → Text editors → TinyMCE → General settings**.
+2. Add `tiny_imageia` to the toolbar row where you want the button to appear.
 
----
+Example:
 
-## 🎓 Utilisation
-
-1. Ouvrez n'importe quel éditeur TinyMCE dans Moodle (page, activité, ressource…)
-2. Cliquez sur le bouton **🖼️** dans la barre d'outils
-3. Dans la fenêtre :
-   - Sélectionnez un prompt dans la liste déroulante, OU
-   - Écrivez votre propre prompt
-   - Modifiez le prompt si nécessaire
-   - Choisissez la taille et la qualité
-4. Cliquez **🚀 Générer l'image**
-5. Une fois l'image apparue :
-   - **✅ Insérer dans l'éditeur** — place l'image dans votre contenu
-   - **⬇️ Télécharger** — sauvegarde le fichier PNG sur votre ordinateur
+```text
+bold italic | tiny_imageia | image media
+```
 
 ---
 
-## 📚 Matières couvertes dans la banque de prompts
+## 🎓 Usage
 
-| Matière | Sujets |
+1. Open any Moodle page or activity that uses the TinyMCE editor.
+2. Click the **🖼️** button in the toolbar.
+3. In the dialog box:
+   - Select a prompt from the drop-down list, or
+   - Write your own prompt
+   - Edit the prompt if needed
+   - Choose the image size and quality
+4. Click **🚀 Generate image**.
+5. Once the image appears:
+   - **✅ Insert into editor** — inserts the image into your Moodle content
+   - **⬇️ Download** — saves the PNG file to your computer
+
+---
+
+## 📚 Prompt bank subjects
+
+| Subject | Topics |
 |---------|--------|
-| 🔬 Sciences | Biologie, Chimie, Physique |
-| 🗺️ Histoire-Géo | Histoire, Géographie |
-| 🗣️ Langues | Français, Anglais |
-| 📐 Mathématiques | Géométrie, Algèbre |
-| 🎨 Arts | Éducation artistique |
-| 💻 Informatique | Numérique, Cybersécurité, IA |
+| 🔬 Science | Biology, Chemistry, Physics |
+| 🗺️ History and Geography | History, Geography |
+| 🗣️ Languages | French, English |
+| 📐 Mathematics | Geometry, Algebra |
+| 🎨 Arts | Art education |
+| 💻 Computing | Digital skills, Cybersecurity, AI |
 
 ---
 
-## 💰 Coûts API OpenAI (indicatifs, mai 2024)
+## 💰 OpenAI API costs for `gpt-image-2`
 
-| Modèle | Qualité | Prix/image |
-|--------|---------|-----------|
-| DALL-E 3 | Standard | ~0,04 $ |
-| DALL-E 3 | HD | ~0,08 $ |
-| DALL-E 2 | Standard | ~0,02 $ |
+Pricing date: **May 13, 2026**.
+
+OpenAI prices image generation by tokens, not by a single fixed price per image.
+The prices below are taken from the OpenAI API pricing page for image generation.
+Actual cost depends on prompt length, image size, image quality, and generated output tokens.
+
+### Standard API pricing
+
+| Model | Modality | Input | Cached input | Output |
+|-------|----------|-------|--------------|--------|
+| `gpt-image-2` | Image | $8.00 / 1M tokens | $2.00 / 1M tokens | $30.00 / 1M tokens |
+| `gpt-image-2` | Text | $5.00 / 1M tokens | $1.25 / 1M tokens | — |
+
+### Batch API pricing
+
+| Model | Modality | Input | Cached input | Output |
+|-------|----------|-------|--------------|--------|
+| `gpt-image-2` | Image | $4.00 / 1M tokens | $1.00 / 1M tokens | $15.00 / 1M tokens |
+| `gpt-image-2` | Text | $2.50 / 1M tokens | $0.625 / 1M tokens | — |
+
+> Note: this Moodle plugin uses the standard image generation endpoint for interactive generation. Batch pricing is listed for reference only.
 
 ---
 
-## 🔐 Sécurité
+## 🔐 Security
 
-⚠️ **Important** : La clé API est stockée dans la configuration Moodle et transmise
-au navigateur de l'enseignant. Pour une sécurité maximale en production,
-il est recommandé de créer un proxy PHP côté serveur plutôt que d'appeler
-l'API OpenAI directement depuis le navigateur.
+This plugin uses a server-side PHP proxy endpoint, `generate.php`.
+The OpenAI API key is stored in Moodle's plugin configuration and is read on the server only.
+The browser sends the prompt, size, quality, selected model, and Moodle session key to `generate.php`; it does **not** receive the OpenAI API key.
+
+Recommended production precautions:
+
+- Keep the OpenAI API key restricted to trusted Moodle administrators.
+- Use HTTPS for the Moodle site.
+- Keep Moodle, PHP, and this plugin up to date.
+- Monitor OpenAI usage from the OpenAI dashboard.
+- Review Moodle web server logs if generation errors occur.
 
 ---
 
-## 📄 Licence
+## 📄 License
 
-GPL v3 — Libre d'utilisation, modification et distribution.
+GPL v3 — free to use, modify, and distribute.
 
-## Structure Moodle correcte
+---
 
-Le dossier sur le disque doit s’appeler `imageia` et être placé dans `lib/editor/tiny/plugins/imageia`.
-Le composant déclaré dans `version.php` reste `tiny_imageia`.
-Ne pas installer ce plugin dans un dossier nommé `tiny_imageia`, sinon Moodle le détecte comme `tiny_tiny_imageia`.
+## Correct Moodle structure
 
+The folder on disk must be named `imageia` and placed in:
+
+```text
+lib/editor/tiny/plugins/imageia
+```
+
+The Moodle component declared in `version.php` remains:
+
+```text
+tiny_imageia
+```
+
+Do not install this plugin in a folder named `tiny_imageia`, otherwise Moodle may detect it as `tiny_tiny_imageia`.
+
+---
 
 ## Version 1.0.2
 
+- Uses `gpt-image-2` as the only image generation model.
+- Sends OpenAI requests through the server-side `generate.php` proxy.
+- Keeps the OpenAI API key on the server instead of exposing it to the browser.
 - Button registered as `tiny_imageia_imageia` following Moodle TinyMCE skeleton naming.
 - Toolbar insertion moved back to the standard `content` toolbar region.
 - Menu item registered separately from the toolbar button.
