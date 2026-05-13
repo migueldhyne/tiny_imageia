@@ -2,7 +2,7 @@
 import {getTinyMCE} from 'editor_tiny/loader';
 import {getPluginMetadata} from 'editor_tiny/utils';
 import {component, pluginName, buttonName, menuItemName} from './common';
-import {register as registerOptions, getApiKey} from './options';
+import {register as registerOptions, getProxyUrl, isConfigured} from './options';
 import * as Configuration from './configuration';
 
 // ─── Données des modèles ──────────────────────────────────────────────────────
@@ -496,7 +496,7 @@ function buildImageRequest(model, prompt, size, quality) {
     return request;
 }
 
-function openImageIADialog(editor, apiKey) {
+function openImageIADialog(editor, proxyUrl, configured) {
   const wrapper = document.createElement('div');
   wrapper.innerHTML = buildModalHTML();
   document.body.appendChild(wrapper);
@@ -647,8 +647,8 @@ function openImageIADialog(editor, apiKey) {
   async function generate() {
     const prompt = promptTA.value.trim();
     if (!prompt) { alert('Veuillez saisir ou sélectionner un prompt.'); return; }
-    if (!apiKey) {
-      alert('Clé API OpenAI manquante.\nAllez dans :\nAdministration → Plugins → Éditeurs de texte → ImageIA pédagogique');
+    if (!configured || !proxyUrl) {
+      alert('Clé API OpenAI non configurée côté Moodle.\nAllez dans :\nAdministration → Plugins → Éditeurs de texte → ImageIA pédagogique, puis purgez les caches.');
       return;
     }
 
@@ -668,13 +668,29 @@ function openImageIADialog(editor, apiKey) {
     genBtn.textContent        = '⏳ Génération en cours…';
 
     try {
-      const resp = await fetch('https://api.openai.com/v1/images/generations', {
+      const sesskey = (typeof M !== 'undefined' && M.cfg) ? M.cfg.sesskey : '';
+      const resp = await fetch(proxyUrl + '?sesskey=' + sesskey, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(buildImageRequest(m, prompt, size, quality)),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error?.message || `Erreur API ${resp.status}`);
+      const rawText = await resp.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (e) {
+        throw new Error('Réponse serveur HTTP ' + resp.status + ' : ' + rawText.substring(0, 400));
+      }
+      if (!resp.ok) {
+        const serverMessage = (data && data.error && typeof data.error === 'object' && data.error.message)
+          ? data.error.message
+          : (data && typeof data.error === 'string')
+            ? data.error
+            : `Erreur API ${resp.status}`;
+        const hint = data && data.hint ? ' — ' + data.hint : '';
+        const raw = data && data.raw ? ' | ' + data.raw.substring(0, 300) : '';
+        throw new Error(serverMessage + hint + raw);
+      }
 
       const src = `data:image/png;base64,${data.data[0].b64_json}`;
       imgEl.src = src; imgEl.style.display = 'block';
@@ -716,11 +732,11 @@ const setupCommands = (editor) => {
   editor.ui.registry.addButton(buttonName, {
     text: 'Image IA',
     tooltip: 'Générer une image IA pédagogique',
-    onAction: () => openImageIADialog(editor, getApiKey(editor)),
+    onAction: () => openImageIADialog(editor, getProxyUrl(editor), isConfigured(editor)),
   });
   editor.ui.registry.addMenuItem(menuItemName, {
     text: 'Générer une image IA pédagogique',
-    onAction: () => openImageIADialog(editor, getApiKey(editor)),
+    onAction: () => openImageIADialog(editor, getProxyUrl(editor), isConfigured(editor)),
   });
 };
 

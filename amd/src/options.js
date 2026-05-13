@@ -2,12 +2,13 @@
 import {getPluginOptionName} from 'editor_tiny/options';
 import {pluginName} from './common';
 
-const apiKeyOptionName = getPluginOptionName(pluginName, 'apikey');
+const proxyUrlOptionName = getPluginOptionName(pluginName, 'proxyurl');
+const configuredOptionName = getPluginOptionName(pluginName, 'configured');
 
 export const register = (editor) => {
-    editor.options.register(apiKeyOptionName, {
-        processor: 'string',
-    });
+    editor.options.register(proxyUrlOptionName, {processor: 'string'});
+    editor.options.register(configuredOptionName, {processor: 'string'});
 };
 
-export const getApiKey = (editor) => editor.options.get(apiKeyOptionName) || '';
+export const getProxyUrl = (editor) => editor.options.get(proxyUrlOptionName) || '';
+export const isConfigured = (editor) => editor.options.get(configuredOptionName) === '1';

@@ -73,10 +73,14 @@ if (empty(trim($prompt))) {
     die(json_encode(['error' => 'Prompt cannot be empty.']));
 }
 
-$apikey = get_config('tiny_imageia', 'apikey');
-if (empty(trim((string) $apikey))) {
+$apikey = trim((string) get_config('tiny_imageia', 'apikey'));
+if ($apikey === '') {
     http_response_code(503);
-    die(json_encode(['error' => 'OpenAI API key not configured.']));
+    die(json_encode([
+        'error' => 'OpenAI API key is not configured for component tiny_imageia on this Moodle site.',
+        'code' => 'missing_moodle_config_apikey',
+        'hint' => 'Re-save the OpenAI API key in Site administration > Plugins > Text editors > ImageIA pédagogique, then purge Moodle caches.',
+    ]));
 }
 
 $payload = json_encode([
@@ -104,7 +108,7 @@ if (class_exists('\\core\\curl')) {
 }
 $curl->setHeader([
     'Content-Type: application/json',
-    'Authorization: Bearer ' . trim($apikey),
+    'Authorization: Bearer ' . $apikey,
 ]);
 $curl->setopt($options);
 
