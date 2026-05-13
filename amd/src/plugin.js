@@ -1,1036 +1,740 @@
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * TinyMCE plugin for AI image generation.
- *
- * @module     tiny_imageia/plugin
- * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
+// tiny_imageia/amd/src/plugin.js
 import {getTinyMCE} from 'editor_tiny/loader';
 import {getPluginMetadata} from 'editor_tiny/utils';
 import {component, pluginName, buttonName, menuItemName} from './common';
 import {register as registerOptions, getApiKey} from './options';
 import * as Configuration from './configuration';
-import {get_strings as getStrings} from 'core/str';
 
-/** @type {string} The Moodle component name used for string lookups. */
-const COMPONENT = 'tiny_imageia';
-
-/** @type {Object|null} Cached translated strings, loaded once on first dialog open. */
-let S = null;
-
-/**
- * Load all plugin strings from Moodle's language system.
- *
- * @returns {Promise<Object>} Resolved object mapping string keys to translated values.
- */
-async function loadStrings() {
-    if (S !== null) {
-        return S;
-    }
-    const keys = [
-        'dialog_title', 'dialog_subtitle', 'close',
-        'tab_generate', 'tab_costs', 'tab_tips',
-        'model_label', 'model_gpt2_sub', 'model_dalle3_sub',
-        'model_new_badge', 'model_classic_badge',
-        'model_gpt2_desc', 'model_dalle3_desc',
-        'strength_gpt2_1', 'strength_gpt2_2', 'strength_gpt2_3', 'strength_gpt2_4',
-        'strength_dalle3_1', 'strength_dalle3_2', 'strength_dalle3_3',
-        'quality_low', 'quality_medium', 'quality_high',
-        'quality_standard', 'quality_hd',
-        'size_square', 'size_landscape', 'size_portrait',
-        'size_landscape_std', 'size_portrait_std',
-        'tip_gpt2', 'tip_dalle3',
-        'promptlibrary', 'promptlibrary_default',
-        'prompt_label', 'prompt_placeholder',
-        'size_label', 'quality_label', 'cost_label', 'cost_per_image',
-        'generate_btn', 'generating', 'generating_note',
-        'insert_btn', 'download_btn', 'regenerate_btn',
-        'revised_prompt', 'img_alt',
-        'error_noprompt', 'error_noapikey', 'error_prefix', 'error_apihint',
-        'costs_why_title', 'costs_why_body',
-        'costs_how_title', 'costs_how_body',
-        'costs_gpt2_title', 'costs_dalle3_title',
-        'costs_col_quality', 'costs_col_use',
-        'costs_low_use', 'costs_medium_use', 'costs_high_use',
-        'costs_standard_use', 'costs_hd_use',
-        'sim_title', 'sim_teachers', 'sim_images', 'sim_model',
-        'sim_weeks', 'sim_calculate',
-        'sim_perweek', 'sim_permonth', 'sim_peryear',
-        'sim_gpt2_medium', 'sim_gpt2_low', 'sim_gpt2_high',
-        'sim_dalle3_std', 'sim_dalle3_hd',
-        'costs_tips_title', 'costs_tip1', 'costs_tip2', 'costs_tip3', 'costs_tip4',
-        'privacy_title', 'privacy_body',
-        'tips_goal', 'tips_structure_title', 'tips_structure_body',
-        'tips_example_label', 'tips_example',
-        'tips_dos_title', 'tips_do_col', 'tips_dont_col',
-        'tips_do1', 'tips_dont1', 'tips_do2', 'tips_dont2',
-        'tips_do3', 'tips_dont3', 'tips_do4', 'tips_dont4',
-        'tips_do5', 'tips_dont5',
-        'tips_keywords_title',
-        'tips_kw_diagrams', 'tips_kw_diagrams_val',
-        'tips_kw_illustrations', 'tips_kw_illustrations_val',
-        'tips_kw_realistic', 'tips_kw_realistic_val',
-        'tips_kw_constraints', 'tips_kw_constraints_val',
-        'tips_iteration_title', 'tips_iteration_body',
-        'subject_sciences', 'subject_history', 'subject_languages',
-        'subject_maths', 'subject_arts', 'subject_cs',
-        'topic_biology', 'topic_chemistry', 'topic_physics',
-        'topic_history', 'topic_geography',
-        'topic_french', 'topic_english',
-        'topic_geometry', 'topic_algebra',
-        'topic_art_education', 'topic_digital_ai',
-        'prompt_bio_1', 'prompt_bio_2', 'prompt_bio_3', 'prompt_bio_4', 'prompt_bio_5',
-        'prompt_chem_1', 'prompt_chem_2', 'prompt_chem_3',
-        'prompt_phys_1', 'prompt_phys_2', 'prompt_phys_3',
-        'prompt_hist_1', 'prompt_hist_2', 'prompt_hist_3',
-        'prompt_geo_1', 'prompt_geo_2', 'prompt_geo_3',
-        'prompt_fr_1', 'prompt_fr_2',
-        'prompt_en_1', 'prompt_en_2', 'prompt_en_3',
-        'prompt_geom_1', 'prompt_geom_2', 'prompt_geom_3',
-        'prompt_alg_1', 'prompt_alg_2',
-        'prompt_art_1', 'prompt_art_2', 'prompt_art_3',
-        'prompt_cs_1', 'prompt_cs_2', 'prompt_cs_3', 'prompt_cs_4',
-    ];
-    const requests = keys.map((key) => ({key, component: COMPONENT}));
-    const values = await getStrings(requests);
-    S = {};
-    keys.forEach((key, i) => {
-        S[key] = values[i];
-    });
-    return S;
-}
-
-/**
- * Get model configuration built from translated strings.
- *
- * @returns {Object} Model info keyed by model name.
- */
-function getModelInfo() {
-    return {
-        'gpt-image-2': {
-            badge: S.model_new_badge,
-            badgeColor: '#7c3aed',
-            description: S.model_gpt2_desc,
-            strengths: [
-                S.strength_gpt2_1,
-                S.strength_gpt2_2,
-                S.strength_gpt2_3,
-                S.strength_gpt2_4,
-            ],
-            qualities: [
-                ['low', S.quality_low],
-                ['medium', S.quality_medium],
-                ['high', S.quality_high],
-            ],
-            defaultQuality: 'medium',
-            sizes: [
-                ['1024x1024', `1024x1024 — ${S.size_square}`],
-                ['1536x1024', `1536x1024 — ${S.size_landscape}`],
-                ['1024x1536', `1024x1536 — ${S.size_portrait}`],
-            ],
-            defaultSize: '1536x1024',
-            tip: S.tip_gpt2,
-            gradient: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
-            tipBg: '#f5f3ff',
-            tipBorder: '#7c3aed',
-            costs: {low: 0.006, medium: 0.053, high: 0.211},
-        },
-        'dall-e-3': {
-            badge: S.model_classic_badge,
-            badgeColor: '#2563eb',
-            description: S.model_dalle3_desc,
-            strengths: [
-                S.strength_dalle3_1,
-                S.strength_dalle3_2,
-                S.strength_dalle3_3,
-            ],
-            qualities: [
-                ['standard', S.quality_standard],
-                ['hd', S.quality_hd],
-            ],
-            defaultQuality: 'standard',
-            sizes: [
-                ['1024x1024', `1024x1024 — ${S.size_square}`],
-                ['1792x1024', `1792x1024 — ${S.size_landscape_std}`],
-                ['1024x1792', `1024x1792 — ${S.size_portrait_std}`],
-            ],
-            defaultSize: '1792x1024',
-            tip: S.tip_dalle3,
-            gradient: 'linear-gradient(135deg,#2563eb,#1d4ed8)',
-            tipBg: '#eff6ff',
-            tipBorder: '#2563eb',
-            costs: {standard: 0.04, hd: 0.08},
-        },
-    };
-}
-
-/** @type {Object} Cost lookup per model and quality. */
-const COST_MAP = {
-    'gpt-image-2': {low: 0.006, medium: 0.053, high: 0.211},
-    'dall-e-3': {standard: 0.04, hd: 0.08},
+// ─── Données des modèles ──────────────────────────────────────────────────────
+const MODEL_INFO = {
+  'gpt-image-2': {
+    badge: '✨ NOUVEAU', badgeColor: '#7c3aed',
+    description: 'Modèle le plus puissant d\'OpenAI (2025). Idéal pour les infographies, le texte dans les images, les schémas scientifiques et le photoréalisme. Meilleure qualité dès le premier essai.',
+    strengths: ['Texte dans les images très précis', 'Infographies et diagrammes complexes', 'Photoréalisme haute fidélité', 'Labels, flèches et légendes nets', 'Tailles flexibles jusqu\'à 2K'],
+    qualities: [['low','Rapide — bon pour les brouillons'],['medium','Équilibre qualité/vitesse ✓'],['high','Qualité maximale — texte dense']],
+    defaultQuality: 'medium',
+    sizes: [['1024x1024','1024×1024 — Carré'],['1536x1024','1536×1024 — Paysage HD'],['1024x1536','1024×1536 — Portrait HD'],['auto','Auto — choix optimal par l’API']],
+    defaultSize: '1536x1024',
+    tip: '<strong>💡 gpt-image-2 :</strong> Pour les schémas avec du texte, choisissez <em>medium</em> ou <em>high</em>. Précisez le public cible, le style (flat, watercolor…) et ajoutez <em>"white background, no watermark"</em>.',
+    gradient: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+    tipBg: '#f5f3ff', tipBorder: '#7c3aed',
+    // Coûts estimés par image (1024×1024, source : calculateur OpenAI)
+    costs: { low: 0.006, medium: 0.053, high: 0.211 },
+  }
+};
+// ─── Banque de prompts ────────────────────────────────────────────────────────
+const PROMPT_BANK = {
+  "🔬 Sciences": {
+    "Biologie": [
+      "Create a simple biology diagram titled 'Cell Structure' for high school students. Show the main organelles of an animal cell (nucleus, mitochondria, ribosomes, endoplasmic reticulum, Golgi apparatus, cell membrane). Labeled arrows, pastel colors, flat design, white background. No watermark.",
+      "Create an educational infographic titled 'Photosynthesis' for middle school students. Show: sunlight + CO2 + water → glucose + oxygen, with a simple plant diagram. Flat design, green and yellow palette, labeled arrows, white background.",
+      "Create a diagram titled 'DNA Double Helix Structure' for high school biology. Show base pairs (A-T, G-C), sugar-phosphate backbone, labeled. Scientific but accessible, blue and white palette, white background.",
+      "Create an educational poster titled 'The Human Digestive System' for students aged 12-15. Path from mouth to intestines with labeled organs. Simple anatomical style, warm colors, white background.",
+      "Create a biology infographic titled 'Cellular Respiration at a Glance' for high school. Show glycolysis, Krebs cycle, electron transport chain. Label: glucose, pyruvate, ATP, NADH, CO2. Clean classroom diagram, white background.",
+    ],
+    "Chimie": [
+      "Create a chemistry diagram titled 'States of Matter' for middle school. Show solid, liquid, gas with molecule arrangement and phase transition arrows (melting, freezing, evaporation, condensation). Flat design, blue palette, white background.",
+      "Create an infographic titled 'The pH Scale' for high school chemistry. Horizontal scale 0–14, common substances at each level (lemon=2, water=7, bleach=12). Color gradient red to purple. White background.",
+      "Create a chemistry infographic titled 'Types of Chemical Bonds' for high school. Show ionic, covalent and metallic bonds with simple molecular diagrams. Color-coded, white background, labeled.",
+    ],
+    "Physique": [
+      "Create a physics diagram titled 'The Electromagnetic Spectrum' for high school. Full spectrum from radio waves to gamma rays, wavelength and frequency indicators. Include rainbow visible light section. White background.",
+      "Create an educational diagram titled 'Newton's Three Laws of Motion'. Illustrate: inertia (ball at rest), F=ma (force arrow), action-reaction (rocket). Flat design, dark blue and orange palette.",
+      "Create an infographic titled 'The Water Cycle' for middle school. Show evaporation, condensation, precipitation and collection with labeled arrows in a landscape. Soft watercolor style, blue and green palette.",
+    ],
+  },
+  "🗺️ Histoire-Géo": {
+    "Histoire": [
+      "Create a timeline titled 'Key Events of World War II (1939-1945)' for high school. 6-8 major events in chronological order with small icons. Clean infographic, dark red and grey palette, white background.",
+      "Create a historical infographic titled 'The French Revolution Timeline (1789-1799)'. Key phases with dates and brief descriptions. Blue, white, red palette, clean design, white background.",
+      "Create a diagram titled 'Causes of World War I (MAIN)'. Show Militarism, Alliance system, Imperialism, Nationalism with icons and connecting arrows. Clean infographic, white background.",
+    ],
+    "Géographie": [
+      "Create a diagram titled 'Types of Ecosystems' for middle school. Show 6 biomes (tropical forest, desert, tundra, ocean, temperate forest, savanna) with small illustrations. Flat design, colorful, white background.",
+      "Create an infographic titled 'Causes and Effects of Climate Change' for high school. Human causes (CO2, deforestation) → effects (rising temperatures, sea level rise). Arrow diagram, blue and orange palette.",
+      "Create a poster titled 'The Rock Cycle' for middle school earth science. Show igneous, sedimentary and metamorphic rocks with transformation processes as labeled arrows. Earthy colors, clean diagram.",
+    ],
+  },
+  "🗣️ Langues": {
+    "Français": [
+      "Create a grammar poster titled 'French Verb Tenses' for language learners. Timeline with present, past (passé composé, imparfait) and future tenses with example sentences. Clean typographic design, blue and white.",
+      "Create a vocabulary infographic titled 'Les Émotions en Français' for beginners. 8-10 emotion words with simple expressive face illustrations. Colorful, friendly style, white background.",
+    ],
+    "Anglais": [
+      "Create a poster titled 'English Irregular Verbs' for language learners. Table with 15 common irregular verbs (base form, past simple, past participle). Colorful table, white background.",
+      "Create an infographic titled 'English Prepositions of Place' for ESL students. Show in, on, at, under, next to, between with simple box/object illustrations. Clean flat design, colorful.",
+      "Create a poster titled 'English Connectors and Transition Words'. Group by function: addition (also, moreover), contrast (however, although), cause (because, since). Clean typographic layout.",
+    ],
+  },
+  "📐 Mathématiques": {
+    "Géométrie": [
+      "Create a poster titled 'Types of Triangles' for middle school math. Show and label: equilateral, isoceles, scalene, right-angled, obtuse, acute with angle properties. Clean geometric style, blue palette.",
+      "Create a diagram titled 'Area and Perimeter Formulas' for middle school. Formulas for rectangle, triangle, circle and trapezoid with illustrated shapes. Clean educational style.",
+      "Create a poster titled '3D Shapes and Their Properties'. Show cube, sphere, cylinder, cone, pyramid with faces, edges and vertices labeled. Isometric illustration, colorful.",
+    ],
+    "Algèbre": [
+      "Create an infographic titled 'Order of Operations (BODMAS/PEMDAS)' for middle school. Show Brackets → Exponents → Multiplication/Division → Addition/Subtraction with a worked example. Orange and blue palette.",
+      "Create a math infographic titled 'Pythagoras Theorem' for middle school. Right triangle with sides a, b, c, the formula a²+b²=c², two numerical examples. Clean educational style.",
+    ],
+  },
+  "🎨 Arts": {
+    "Éducation artistique": [
+      "Create a color wheel poster titled 'The Color Wheel' for art students. Show primary (red, blue, yellow), secondary (orange, green, purple) and tertiary colors, with complementary, analogous, triadic relationships. White background.",
+      "Create an art history infographic titled 'Major Art Movements Timeline'. Show Impressionism, Cubism, Surrealism, Abstract Expressionism, Pop Art with dates, key artists and style swatches.",
+      "Create a diagram titled 'Elements of Art'. Show and illustrate the 7 elements: line, shape, form, space, texture, value, color. Each with a small visual example. White background.",
+    ],
+  },
+  "💻 Informatique": {
+    "Numérique & IA": [
+      "Create an infographic titled 'How the Internet Works' for middle school. Data journey: user → router → ISP → server → back, with simple icons. Flat design, blue and grey palette.",
+      "Create a diagram titled 'Binary Number System' for computer science. Show binary (base 2) vs decimal 0-15, with a clear conversion table. Clean green-on-dark terminal style.",
+      "Create a poster titled 'Types of Cybersecurity Threats'. Show phishing, malware, ransomware, DDoS with icons and descriptions. Warning-style design, red and dark palette.",
+      "Create an infographic titled 'How Machine Learning Works' for high school. Pipeline: data collection → training → model → prediction → feedback loop. Purple and blue palette, labeled arrows.",
+      "Create a diagram titled 'The Software Development Cycle (SDLC)'. 6 phases: planning, design, coding, testing, deployment, maintenance in a circular diagram. Flat design, teal palette.",
+    ],
+  },
 };
 
-/**
- * Get the prompt library built from translated strings.
- *
- * @returns {Object} Prompt bank keyed by subject and topic.
- */
-function getPromptBank() {
-    return {
-        [S.subject_sciences]: {
-            [S.topic_biology]: [
-                S.prompt_bio_1,
-                S.prompt_bio_2,
-                S.prompt_bio_3,
-                S.prompt_bio_4,
-                S.prompt_bio_5,
-            ],
-            [S.topic_chemistry]: [
-                S.prompt_chem_1,
-                S.prompt_chem_2,
-                S.prompt_chem_3,
-            ],
-            [S.topic_physics]: [
-                S.prompt_phys_1,
-                S.prompt_phys_2,
-                S.prompt_phys_3,
-            ],
-        },
-        [S.subject_history]: {
-            [S.topic_history]: [
-                S.prompt_hist_1,
-                S.prompt_hist_2,
-                S.prompt_hist_3,
-            ],
-            [S.topic_geography]: [
-                S.prompt_geo_1,
-                S.prompt_geo_2,
-                S.prompt_geo_3,
-            ],
-        },
-        [S.subject_languages]: {
-            [S.topic_french]: [
-                S.prompt_fr_1,
-                S.prompt_fr_2,
-            ],
-            [S.topic_english]: [
-                S.prompt_en_1,
-                S.prompt_en_2,
-                S.prompt_en_3,
-            ],
-        },
-        [S.subject_maths]: {
-            [S.topic_geometry]: [
-                S.prompt_geom_1,
-                S.prompt_geom_2,
-                S.prompt_geom_3,
-            ],
-            [S.topic_algebra]: [
-                S.prompt_alg_1,
-                S.prompt_alg_2,
-            ],
-        },
-        [S.subject_arts]: {
-            [S.topic_art_education]: [
-                S.prompt_art_1,
-                S.prompt_art_2,
-                S.prompt_art_3,
-            ],
-        },
-        [S.subject_cs]: {
-            [S.topic_digital_ai]: [
-                S.prompt_cs_1,
-                S.prompt_cs_2,
-                S.prompt_cs_3,
-                S.prompt_cs_4,
-            ],
-        },
-    };
+// ─── Helpers HTML ─────────────────────────────────────────────────────────────
+function buildModelCard(m) {
+  const info = MODEL_INFO[m];
+  const strengths = info.strengths.map(s => `<li style="margin:2px 0;">✓ ${s}</li>`).join('');
+  return `
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#374151;line-height:1.5;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <span style="background:${info.badgeColor};color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;">${info.badge}</span>
+        <strong style="font-size:.88rem;">${m}</strong>
+      </div>
+      <p style="margin:0 0 6px;">${info.description}</p>
+      <ul style="margin:0;padding-left:16px;color:#4b5563;">${strengths}</ul>
+    </div>`;
 }
 
-/**
- * Build the model info card HTML for a given model key.
- *
- * @param {string} modelKey The model identifier.
- * @param {Object} modelInfo The model configuration object.
- * @returns {string} HTML string.
- */
-function buildModelCard(modelKey, modelInfo) {
-    const info = modelInfo[modelKey];
-    const items = info.strengths.map((s) => `<li>${s}</li>`).join('');
-    return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;'
-        + 'padding:12px 14px;font-size:.82rem;color:#374151;">'
-        + `<span style="background:${info.badgeColor};color:#fff;font-size:.7rem;`
-        + `font-weight:700;padding:2px 8px;border-radius:99px;">${info.badge}</span> `
-        + `<strong>${modelKey}</strong>`
-        + `<p style="margin:6px 0;">${info.description}</p>`
-        + `<ul style="margin:0;padding-left:16px;">${items}</ul></div>`;
+function buildSizeOptions(m) {
+  return MODEL_INFO[m].sizes.map(([val, label]) =>
+    `<option value="${val}"${val === MODEL_INFO[m].defaultSize ? ' selected' : ''}>${label}</option>`
+  ).join('');
 }
 
-/**
- * Build size select options for a given model.
- *
- * @param {string} modelKey The model identifier.
- * @param {Object} modelInfo The model configuration object.
- * @returns {string} HTML option elements.
- */
-function buildSizeOptions(modelKey, modelInfo) {
-    return modelInfo[modelKey].sizes.map(([val, label]) => {
-        const selected = val === modelInfo[modelKey].defaultSize ? ' selected' : '';
-        return `<option value="${val}"${selected}>${label}</option>`;
-    }).join('');
+function buildQualityOptions(m) {
+  return MODEL_INFO[m].qualities.map(([val, label]) =>
+    `<option value="${val}"${val === MODEL_INFO[m].defaultQuality ? ' selected' : ''}>${label}</option>`
+  ).join('');
 }
 
-/**
- * Build quality select options for a given model.
- *
- * @param {string} modelKey The model identifier.
- * @param {Object} modelInfo The model configuration object.
- * @returns {string} HTML option elements.
- */
-function buildQualityOptions(modelKey, modelInfo) {
-    return modelInfo[modelKey].qualities.map(([val, label]) => {
-        const selected = val === modelInfo[modelKey].defaultQuality ? ' selected' : '';
-        return `<option value="${val}"${selected}>${label}</option>`;
-    }).join('');
+function buildBankOptions() {
+  let html = '<option value="">— Sélectionner un prompt ou écrire le vôtre —</option>';
+  for (const [subject, topics] of Object.entries(PROMPT_BANK)) {
+    html += `<optgroup label="${subject}">`;
+    for (const [topic, prompts] of Object.entries(topics)) {
+      prompts.forEach(p => {
+        const label = p.substring(0, 65).replace(/"/g, '&quot;') + '…';
+        html += `<option value="${p.replace(/"/g, '&quot;')}">${topic} — ${label}</option>`;
+      });
+    }
+    html += `</optgroup>`;
+  }
+  return html;
 }
 
-/**
- * Build the prompt bank select options.
- *
- * @param {Object} promptBank The prompt bank object.
- * @returns {string} HTML option and optgroup elements.
- */
-function buildBankOptions(promptBank) {
-    let html = `<option value="">${S.promptlibrary_default}</option>`;
-    Object.keys(promptBank).forEach((subject) => {
-        html += `<optgroup label="${subject}">`;
-        Object.keys(promptBank[subject]).forEach((topic) => {
-            promptBank[subject][topic].forEach((p) => {
-                const safe = p.replace(/"/g, '&quot;');
-                const label = p.substring(0, 65) + '...';
-                html += `<option value="${safe}">${topic} -- ${label}</option>`;
-            });
-        });
-        html += '</optgroup>';
-    });
-    return html;
-}
-
-/**
- * Build the cost transparency tab HTML.
- *
- * @returns {string} HTML string.
- */
+// ─── Onglet Coûts & Transparence ─────────────────────────────────────────────
 function buildCostTab() {
-    return '<div id="tab-cost" style="display:none;">'
-        + '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;'
-        + 'padding:14px;margin-bottom:16px;font-size:.85rem;color:#92400e;">'
-        + `<strong>${S.costs_why_title}</strong> ${S.costs_why_body}</div>`
-        + `<h3 style="font-size:.9rem;color:#7c3aed;">${S.costs_gpt2_title}</h3>`
-        + '<table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:14px;">'
-        + '<tr style="background:#f5f3ff;">'
-        + `<th style="padding:7px;border:1px solid #e5e7eb;text-align:left;">${S.costs_col_quality}</th>`
-        + '<th style="padding:7px;border:1px solid #e5e7eb;text-align:center;">1024x1024</th>'
-        + `<th style="padding:7px;border:1px solid #e5e7eb;text-align:left;">${S.costs_col_use}</th></tr>`
-        + '<tr><td style="padding:7px;border:1px solid #e5e7eb;"><strong>low</strong></td>'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;text-align:center;color:#059669;">'
-        + 'approx. $0.006</td>'
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.costs_low_use}</td></tr>`
-        + '<tr style="background:#fafafa;">'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;"><strong>medium</strong></td>'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;text-align:center;color:#2563eb;">'
-        + 'approx. $0.053</td>'
-        + `<td style="padding:7px;border:1px solid #e5e7eb;"><strong>${S.costs_medium_use}</strong>`
-        + '</td></tr>'
-        + '<tr><td style="padding:7px;border:1px solid #e5e7eb;"><strong>high</strong></td>'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;text-align:center;color:#dc2626;">'
-        + 'approx. $0.211</td>'
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.costs_high_use}</td></tr>`
-        + '</table>'
-        + `<h3 style="font-size:.9rem;color:#2563eb;">${S.costs_dalle3_title}</h3>`
-        + '<table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:16px;">'
-        + '<tr style="background:#eff6ff;">'
-        + `<th style="padding:7px;border:1px solid #e5e7eb;text-align:left;">${S.costs_col_quality}</th>`
-        + '<th style="padding:7px;border:1px solid #e5e7eb;text-align:center;">1024x1024</th>'
-        + `<th style="padding:7px;border:1px solid #e5e7eb;text-align:left;">${S.costs_col_use}</th></tr>`
-        + '<tr><td style="padding:7px;border:1px solid #e5e7eb;"><strong>standard</strong></td>'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;text-align:center;color:#059669;">'
-        + 'approx. $0.04</td>'
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.costs_standard_use}</td></tr>`
-        + '<tr style="background:#fafafa;">'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;"><strong>hd</strong></td>'
-        + '<td style="padding:7px;border:1px solid #e5e7eb;text-align:center;color:#2563eb;">'
-        + 'approx. $0.08</td>'
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.costs_hd_use}</td></tr>`
-        + '</table>'
-        + `<h3 style="font-size:.9rem;color:#111;">${S.sim_title}</h3>`
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'
-        + `<div><label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:3px;">${S.sim_teachers}</label>`
-        + '<input type="number" id="sim-teachers" value="5" min="1" '
-        + 'style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:6px;'
-        + 'font-size:.84rem;box-sizing:border-box;"></div>'
-        + `<div><label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:3px;">${S.sim_images}</label>`
-        + '<input type="number" id="sim-images" value="10" min="1" '
-        + 'style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:6px;'
-        + 'font-size:.84rem;box-sizing:border-box;"></div>'
-        + `<div><label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:3px;">${S.sim_model}</label>`
-        + '<select id="sim-model" style="width:100%;padding:6px;border:1px solid #d1d5db;'
-        + 'border-radius:6px;font-size:.82rem;">'
-        + `<option value="0.053">${S.sim_gpt2_medium}</option>`
-        + `<option value="0.006">${S.sim_gpt2_low}</option>`
-        + `<option value="0.211">${S.sim_gpt2_high}</option>`
-        + `<option value="0.04">${S.sim_dalle3_std}</option>`
-        + `<option value="0.08">${S.sim_dalle3_hd}</option>`
-        + '</select></div>'
-        + `<div><label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:3px;">${S.sim_weeks}</label>`
-        + '<input type="number" id="sim-weeks" value="36" min="1" max="52" '
-        + 'style="width:100%;padding:6px;border:1px solid #d1d5db;border-radius:6px;'
-        + 'font-size:.84rem;box-sizing:border-box;"></div>'
-        + '</div>'
-        + `<button id="sim-calc" style="width:100%;padding:9px;background:#374151;color:#fff;`
-        + `border:none;border-radius:7px;font-weight:600;cursor:pointer;">${S.sim_calculate}</button>`
-        + '<div id="sim-result" style="display:none;margin-top:10px;"></div>'
-        + '</div>'
-        + `<h3 style="font-size:.9rem;color:#111;margin-top:16px;">${S.costs_tips_title}</h3>`
-        + '<ul style="font-size:.82rem;line-height:1.8;padding-left:18px;margin:0 0 14px;">'
-        + `<li>${S.costs_tip1}</li>`
-        + `<li>${S.costs_tip2}</li>`
-        + `<li>${S.costs_tip3}</li>`
-        + `<li>${S.costs_tip4}</li>`
-        + '</ul>'
-        + '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;'
-        + 'padding:12px;font-size:.81rem;color:#7f1d1d;">'
-        + `<strong>${S.privacy_title}</strong> ${S.privacy_body}</div>`
-        + '</div>';
+  return `
+  <div id="tab-cost" style="display:none;">
+
+    <!-- Intro -->
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;margin-bottom:18px;font-size:.85rem;color:#92400e;line-height:1.6;">
+      <strong>ℹ️ Pourquoi cet onglet ?</strong><br>
+      Chaque image générée a un coût réel facturé par OpenAI sur votre clé API.
+      Ces informations vous permettent d'utiliser l'outil de façon <strong>éclairée et responsable</strong>,
+      et d'estimer l'impact budgétaire pour votre établissement.
+    </div>
+
+    <!-- Comment ça fonctionne -->
+    <h3 style="font-size:.95rem;color:#111;margin:0 0 8px;">📊 Comment OpenAI facture-t-il ?</h3>
+    <p style="font-size:.83rem;color:#374151;line-height:1.6;margin:0 0 14px;">
+      <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px;">gpt-image-2</code> ne coûte
+      <strong>pas un prix fixe par image</strong>. OpenAI utilise un système de
+      <strong>tokens</strong> (unités de traitement) : chaque image consomme un certain nombre
+      de tokens en entrée et en sortie. Le coût varie donc selon la taille de l'image et la qualité choisie.
+      Les chiffres ci-dessous sont des <em>estimations</em> issues du calculateur officiel OpenAI.
+    </p>
+
+    <!-- Tableau gpt-image-2 -->
+    <h3 style="font-size:.9rem;color:#7c3aed;margin:0 0 8px;">✨ gpt-image-2 — Coûts estimés par image</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.83rem;margin-bottom:16px;">
+      <thead>
+        <tr style="background:#f5f3ff;">
+          <th style="padding:8px 10px;text-align:left;border:1px solid #e5e7eb;color:#4b5563;">Qualité</th>
+          <th style="padding:8px 10px;text-align:center;border:1px solid #e5e7eb;color:#4b5563;">1024×1024</th>
+          <th style="padding:8px 10px;text-align:center;border:1px solid #e5e7eb;color:#4b5563;">1536×1024</th>
+          <th style="padding:8px 10px;text-align:center;border:1px solid #e5e7eb;color:#4b5563;">Usage recommandé</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;"><strong>low</strong></td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#059669;font-weight:600;">≈ 0,006 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#059669;">≈ 0,008 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;color:#6b7280;">Brouillons, tests rapides</td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;"><strong>medium ✓</strong></td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#2563eb;font-weight:600;">≈ 0,053 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#2563eb;">≈ 0,07 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;color:#374151;"><strong>Usage pédagogique courant</strong></td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;"><strong>high</strong></td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#dc2626;font-weight:600;">≈ 0,21 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;text-align:center;color:#dc2626;">≈ 0,28 $</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;color:#6b7280;">Schémas très denses, texte fin</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Simulateur budgétaire -->
+    <h3 style="font-size:.95rem;color:#111;margin:0 0 10px;">🧮 Simulateur budgétaire</h3>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:18px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nb d'enseignants</label>
+          <input type="number" id="sim-teachers" value="5" min="1" max="500"
+            style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Images / enseignant / semaine</label>
+          <input type="number" id="sim-images" value="10" min="1" max="1000"
+            style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Modèle</label>
+          <select id="sim-model" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;">
+            <option value="gpt-image-2-medium">gpt-image-2 · medium (recommandé)</option>
+            <option value="gpt-image-2-low">gpt-image-2 · low (brouillons)</option>
+            <option value="gpt-image-2-high">gpt-image-2 · high (dense)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.82rem;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Nb de semaines / an</label>
+          <input type="number" id="sim-weeks" value="36" min="1" max="52"
+            style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px;font-size:.85rem;box-sizing:border-box;">
+        </div>
+      </div>
+      <button id="sim-calc" style="width:100%;padding:9px;background:#374151;color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer;font-size:.88rem;">
+        🧮 Calculer
+      </button>
+      <div id="sim-result" style="display:none;margin-top:12px;"></div>
+    </div>
+
+    <!-- Bonnes pratiques budgétaires -->
+    <h3 style="font-size:.95rem;color:#111;margin:0 0 8px;">✅ Bonnes pratiques pour maîtriser les coûts</h3>
+    <ul style="font-size:.83rem;color:#374151;line-height:1.8;padding-left:18px;margin:0 0 16px;">
+      <li><strong>Commencez en qualité <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">low</code></strong> pour tester votre prompt, puis passez en <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">medium</code> ou <code>high</code> pour la version finale.</li>
+      <li><strong>Utilisez la banque de prompts</strong> : des prompts bien construits donnent de meilleurs résultats du premier coup, évitant les régénérations coûteuses.</li>
+      <li><strong>Évitez la qualité <code>high</code></strong> pour les images simples sans texte dense — <code>medium</code> suffit dans 90% des cas pédagogiques.</li>
+      <li><strong>Ne retouchez pas</strong> une image générée via ce plugin (upload + édition) : cela coûte 2–3× plus cher qu'une génération simple.</li>
+      <li><strong>Définissez un budget mensuel</strong> dans le dashboard OpenAI (platform.openai.com → Settings → Limits) pour éviter les dépassements.</li>
+    </ul>
+
+    <!-- Avertissement données -->
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 14px;font-size:.81rem;color:#7f1d1d;line-height:1.6;">
+      <strong>🔒 Données et vie privée</strong><br>
+      Les prompts saisis sont envoyés aux serveurs d'OpenAI (USA) pour traitement.
+      <strong>Ne saisissez jamais de données personnelles d'élèves</strong> dans les prompts.
+      Consultez la politique de confidentialité d'OpenAI et le règlement de votre établissement
+      avant d'autoriser l'accès aux étudiants.
+    </div>
+
+  </div>`;
 }
 
-/**
- * Build the prompt tips tab HTML.
- *
- * @returns {string} HTML string.
- */
+// ─── Onglet Conseils de prompts ───────────────────────────────────────────────
 function buildTipsTab() {
-    return '<div id="tab-tips" style="display:none;">'
-        + '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;'
-        + `padding:12px;margin-bottom:14px;font-size:.83rem;color:#14532d;">${S.tips_goal}</div>`
-        + `<h3 style="font-size:.9rem;">${S.tips_structure_title}</h3>`
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;'
-        + 'padding:12px;font-size:.82rem;margin-bottom:14px;">'
-        + `${S.tips_structure_body}<br><br>`
-        + `<em>${S.tips_example_label}</em> ${S.tips_example}</div>`
-        + `<h3 style="font-size:.9rem;">${S.tips_dos_title}</h3>`
-        + '<table style="width:100%;border-collapse:collapse;font-size:.81rem;margin-bottom:14px;">'
-        + '<tr>'
-        + `<th style="padding:7px;background:#f0fdf4;border:1px solid #e5e7eb;text-align:left;`
-        + `color:#14532d;">${S.tips_do_col}</th>`
-        + `<th style="padding:7px;background:#fef2f2;border:1px solid #e5e7eb;text-align:left;`
-        + `color:#7f1d1d;">${S.tips_dont_col}</th></tr>`
-        + `<tr><td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_do1}</td>`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_dont1}</td></tr>`
-        + `<tr style="background:#fafafa;">`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_do2}</td>`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_dont2}</td></tr>`
-        + `<tr><td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_do3}</td>`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_dont3}</td></tr>`
-        + `<tr style="background:#fafafa;">`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_do4}</td>`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_dont4}</td></tr>`
-        + `<tr><td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_do5}</td>`
-        + `<td style="padding:7px;border:1px solid #e5e7eb;">${S.tips_dont5}</td></tr>`
-        + '</table>'
-        + `<h3 style="font-size:.9rem;">${S.tips_keywords_title}</h3>`
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.82rem;">'
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px;">'
-        + `<strong>${S.tips_kw_diagrams}</strong><br>`
-        + `<span style="color:#6b7280;">${S.tips_kw_diagrams_val}</span></div>`
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px;">'
-        + `<strong>${S.tips_kw_illustrations}</strong><br>`
-        + `<span style="color:#6b7280;">${S.tips_kw_illustrations_val}</span></div>`
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px;">'
-        + `<strong>${S.tips_kw_realistic}</strong><br>`
-        + `<span style="color:#6b7280;">${S.tips_kw_realistic_val}</span></div>`
-        + '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px;">'
-        + `<strong>${S.tips_kw_constraints}</strong><br>`
-        + `<span style="color:#6b7280;">${S.tips_kw_constraints_val}</span></div></div>`
-        + '<div style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:5px;'
-        + 'padding:10px;margin-top:14px;font-size:.82rem;color:#1e3a5f;">'
-        + `<strong>${S.tips_iteration_title}:</strong> ${S.tips_iteration_body}</div>`
-        + '</div>';
+  return `
+  <div id="tab-tips" style="display:none;">
+
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:.83rem;color:#14532d;line-height:1.6;">
+      <strong>🎯 Objectif :</strong> Un bon prompt = une image utile dès le premier essai = moins de coût et de temps perdu.
+    </div>
+
+    <!-- Structure -->
+    <h3 style="font-size:.9rem;color:#111;margin:0 0 8px;">🏗️ Structure d'un prompt efficace</h3>
+    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:.82rem;color:#374151;line-height:1.7;margin-bottom:16px;">
+      <code style="background:#e0e7ff;padding:2px 6px;border-radius:4px;font-weight:600;">Format</code> +
+      <code style="background:#dcfce7;padding:2px 6px;border-radius:4px;font-weight:600;">Sujet</code> +
+      <code style="background:#fef3c7;padding:2px 6px;border-radius:4px;font-weight:600;">Public cible</code> +
+      <code style="background:#ffe4e6;padding:2px 6px;border-radius:4px;font-weight:600;">Style visuel</code> +
+      <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-weight:600;">Contraintes</code>
+      <br><br>
+      <em>Exemple :</em><br>
+      <span style="color:#7c3aed;">"Create an educational infographic</span>
+      <span style="color:#059669;"> titled 'The Water Cycle' for middle school students.</span>
+      <span style="color:#d97706;"> Show evaporation, condensation, precipitation with labeled arrows.</span>
+      <span style="color:#dc2626;"> Soft watercolor style, blue and green palette.</span>
+      <span style="color:#374151;"> White background, no watermark."</span>
+    </div>
+
+    <!-- Tableau do/don't -->
+    <h3 style="font-size:.9rem;color:#111;margin:0 0 8px;">✅ À faire / ❌ À éviter</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-bottom:16px;">
+      <thead>
+        <tr>
+          <th style="padding:8px 10px;background:#f0fdf4;border:1px solid #e5e7eb;color:#14532d;text-align:left;">✅ À faire</th>
+          <th style="padding:8px 10px;background:#fef2f2;border:1px solid #e5e7eb;color:#7f1d1d;text-align:left;">❌ À éviter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Préciser le <strong>public cible</strong> ("for high school students")</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Prompts trop vagues ("make an image about science")</td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Ajouter <strong>"white background, no watermark"</strong></td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Oublier le fond ou le style visuel</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Mettre le texte attendu <strong>entre guillemets</strong></td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Demander trop de concepts en une seule image</td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Spécifier le <strong>style</strong> (flat, watercolor, realistic, diagram)</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Mentionner des personnes réelles ou des marques</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Lister les <strong>éléments spécifiques</strong> à inclure</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Utiliser des termes ambigus ou poétiques</td>
+        </tr>
+        <tr style="background:#fafafa;">
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Commencer en <strong>qualité low</strong> pour tester</td>
+          <td style="padding:8px 10px;border:1px solid #e5e7eb;">Régénérer 5× sans modifier le prompt</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Mots-clés de style -->
+    <h3 style="font-size:.9rem;color:#111;margin:0 0 8px;">🎨 Mots-clés de style utiles</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.82rem;margin-bottom:16px;">
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px 12px;">
+        <strong style="color:#374151;">Schémas & diagrammes</strong><br>
+        <span style="color:#6b7280;">flat design · clean diagram · labeled arrows · educational poster · infographic style · white background</span>
+      </div>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px 12px;">
+        <strong style="color:#374151;">Illustrations</strong><br>
+        <span style="color:#6b7280;">watercolor · soft illustration · cartoon · hand-drawn · pastel colors · storybook style</span>
+      </div>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px 12px;">
+        <strong style="color:#374151;">Photos réalistes</strong><br>
+        <span style="color:#6b7280;">photorealistic · candid photograph · 35mm film · natural lighting · shallow depth of field</span>
+      </div>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:7px;padding:10px 12px;">
+        <strong style="color:#374151;">Contraintes utiles</strong><br>
+        <span style="color:#6b7280;">no watermark · no extra text · no logos · no trademarks · plain background · no people</span>
+      </div>
+    </div>
+
+    <!-- Astuce itération -->
+    <div style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:5px;padding:10px 14px;font-size:.82rem;color:#1e3a5f;line-height:1.6;">
+      <strong>🔄 Astuce itération :</strong> Si le résultat n'est pas satisfaisant, modifiez <em>un seul élément</em> à la fois dans le prompt ("same image but with warmer colors" · "same image but add labels" · "same image but simpler"). Cela est plus efficace — et moins coûteux — que de tout réécrire.
+    </div>
+
+  </div>`;
 }
 
-/**
- * Build the complete modal HTML.
- *
- * @param {Object} modelInfo The model configuration object.
- * @param {Object} promptBank The prompt bank object.
- * @returns {string} HTML string.
- */
-function buildModalHTML(modelInfo, promptBank) {
-    const activeTab = 'padding:9px 16px;border:none;border-bottom:3px solid #7c3aed;'
-        + 'background:none;cursor:pointer;font-size:.86rem;font-weight:700;color:#7c3aed;';
-    const inactiveTab = 'padding:9px 16px;border:none;border-bottom:3px solid transparent;'
-        + 'background:none;cursor:pointer;font-size:.86rem;font-weight:500;color:#6b7280;';
+// ─── HTML de la modale complète avec onglets ──────────────────────────────────
+function buildModalHTML() {
+  const tabStyle = (active) => `
+    padding:9px 18px;border:none;border-bottom:3px solid ${active ? '#7c3aed' : 'transparent'};
+    background:none;cursor:pointer;font-size:.87rem;font-weight:${active ? '700' : '500'};
+    color:${active ? '#7c3aed' : '#6b7280'};white-space:nowrap;`;
 
-    return '<div id="imageia-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.6);'
-        + 'z-index:99999;display:flex;align-items:center;justify-content:center;">'
-        + '<div style="background:#fff;border-radius:14px;width:700px;max-width:96vw;'
-        + 'max-height:92vh;overflow:hidden;display:flex;flex-direction:column;'
-        + 'box-shadow:0 16px 56px rgba(0,0,0,.35);">'
-        + '<div style="padding:20px 26px 0;flex-shrink:0;">'
-        + '<div style="display:flex;justify-content:space-between;margin-bottom:14px;">'
-        + '<div>'
-        + `<h2 style="margin:0;font-size:1.1rem;color:#111;">${S.dialog_title}</h2>`
-        + `<p style="margin:3px 0 0;font-size:.76rem;color:#9ca3af;">${S.dialog_subtitle}</p>`
-        + '</div>'
-        + `<button id="imageia-close" style="background:none;border:none;font-size:1.5rem;`
-        + `cursor:pointer;color:#9ca3af;">${S.close}</button></div>`
-        + '<div style="display:flex;border-bottom:1px solid #e5e7eb;'
-        + 'margin:0 -26px;padding:0 26px;overflow-x:auto;">'
-        + `<button id="tab-btn-generate" style="${activeTab}">${S.tab_generate}</button>`
-        + `<button id="tab-btn-cost" style="${inactiveTab}">${S.tab_costs}</button>`
-        + `<button id="tab-btn-tips" style="${inactiveTab}">${S.tab_tips}</button>`
-        + '</div></div>'
-        + '<div style="padding:18px 26px 22px;overflow-y:auto;flex:1;">'
-        + '<div id="tab-generate">'
-        + `<label style="font-weight:700;font-size:.87rem;display:block;margin-bottom:8px;">`
-        + `${S.model_label}</label>`
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'
-        + '<label id="lbl-gpt2" style="display:flex;align-items:center;gap:8px;padding:10px 12px;'
-        + 'border:2px solid #7c3aed;border-radius:8px;cursor:pointer;background:#faf5ff;">'
-        + '<input type="radio" name="imageia-model" value="gpt-image-2" checked>'
-        + '<div>'
-        + '<div style="font-weight:700;color:#7c3aed;font-size:.87rem;">gpt-image-2</div>'
-        + `<div style="font-size:.73rem;color:#6b7280;">${S.model_gpt2_sub}</div>`
-        + '</div></label>'
-        + '<label id="lbl-dalle3" style="display:flex;align-items:center;gap:8px;padding:10px 12px;'
-        + 'border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;background:#f9fafb;">'
-        + '<input type="radio" name="imageia-model" value="dall-e-3">'
-        + '<div>'
-        + '<div style="font-weight:700;color:#2563eb;font-size:.87rem;">DALL-E 3</div>'
-        + `<div style="font-size:.73rem;color:#6b7280;">${S.model_dalle3_sub}</div>`
-        + '</div></label></div>'
-        + '<div id="imageia-model-card" style="margin-bottom:12px;">'
-        + buildModelCard('gpt-image-2', modelInfo) + '</div>'
-        + '<hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 12px;">'
-        + `<label style="font-weight:700;font-size:.87rem;display:block;margin-bottom:6px;">`
-        + `${S.promptlibrary}</label>`
-        + '<select id="imageia-bank" style="width:100%;padding:8px;border:1px solid #d1d5db;'
-        + 'border-radius:7px;font-size:.85rem;margin-bottom:12px;">'
-        + buildBankOptions(promptBank) + '</select>'
-        + `<label style="font-weight:700;font-size:.87rem;display:block;margin-bottom:6px;">`
-        + `${S.prompt_label}</label>`
-        + `<textarea id="imageia-prompt" rows="4" placeholder="${S.prompt_placeholder}" `
-        + 'style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:7px;'
-        + 'font-size:.85rem;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>'
-        + '<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:flex-end;">'
-        + '<div style="flex:1;min-width:140px;">'
-        + `<label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:4px;">`
-        + `${S.size_label}</label>`
-        + '<select id="imageia-size" style="width:100%;padding:7px;border:1px solid #d1d5db;'
-        + 'border-radius:7px;font-size:.82rem;">'
-        + buildSizeOptions('gpt-image-2', modelInfo) + '</select></div>'
-        + '<div style="flex:1;min-width:140px;">'
-        + `<label style="font-size:.82rem;font-weight:700;display:block;margin-bottom:4px;">`
-        + `${S.quality_label}</label>`
-        + '<select id="imageia-quality" style="width:100%;padding:7px;border:1px solid #d1d5db;'
-        + 'border-radius:7px;font-size:.82rem;">'
-        + buildQualityOptions('gpt-image-2', modelInfo) + '</select></div>'
-        + '<div id="cost-estimate-box" style="background:#f5f3ff;border:1px solid #ddd6fe;'
-        + 'border-radius:7px;padding:7px 12px;text-align:center;">'
-        + `<div style="font-size:.68rem;color:#7c3aed;font-weight:600;">${S.cost_label}</div>`
-        + '<div id="cost-estimate-value" style="font-size:.95rem;font-weight:700;color:#7c3aed;">'
-        + 'approx. $0.053</div>'
-        + `<div style="font-size:.64rem;color:#9ca3af;">${S.cost_per_image}</div></div></div>`
-        + '<div id="imageia-tip" style="background:#f5f3ff;border-left:4px solid #7c3aed;'
-        + 'border-radius:5px;padding:10px 14px;margin-top:12px;font-size:.8rem;line-height:1.55;">'
-        + modelInfo['gpt-image-2'].tip + '</div>'
-        + '<button id="imageia-generate" style="margin-top:14px;width:100%;padding:13px;'
-        + 'background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;'
-        + 'border-radius:9px;font-size:.96rem;font-weight:700;cursor:pointer;">'
-        + `${S.generate_btn.replace('{$a}', 'gpt-image-2')}</button>`
-        + '<div id="imageia-result" style="margin-top:16px;display:none;text-align:center;">'
-        + '<div id="imageia-loading" style="display:none;padding:22px;">'
-        + '<div style="font-size:1.6rem;margin-bottom:6px;">...</div>'
-        + `<div id="loading-label" style="color:#7c3aed;font-weight:700;">${S.generating}</div>`
-        + `<div style="color:#9ca3af;font-size:.79rem;margin-top:4px;">${S.generating_note}</div>`
-        + '</div>'
-        + '<div id="imageia-error" style="display:none;color:#dc2626;background:#fef2f2;'
-        + 'border:1px solid #fecaca;padding:12px;border-radius:7px;margin-bottom:10px;'
-        + 'text-align:left;font-size:.85rem;"></div>'
-        + `<img id="imageia-img" style="max-width:100%;border-radius:10px;`
-        + `box-shadow:0 4px 20px rgba(0,0,0,.18);display:none;" alt="${S.img_alt}"/>`
-        + '<div id="imageia-revised" style="display:none;margin-top:6px;font-size:.75rem;'
-        + 'color:#9ca3af;font-style:italic;text-align:left;"></div>'
-        + '<div id="imageia-actions" style="display:none;margin-top:12px;gap:10px;'
-        + 'justify-content:center;flex-wrap:wrap;">'
-        + `<button id="imageia-insert" style="padding:10px 20px;background:#10b981;color:#fff;`
-        + `border:none;border-radius:7px;cursor:pointer;font-weight:700;">`
-        + `${S.insert_btn}</button>`
-        + `<a id="imageia-download" download="ai-image.png" `
-        + `style="padding:10px 20px;background:#6366f1;color:#fff;border-radius:7px;`
-        + `text-decoration:none;font-weight:700;display:inline-block;">${S.download_btn}</a>`
-        + `<button id="imageia-regenerate" style="padding:10px 20px;background:#f9fafb;`
-        + `color:#374151;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;">`
-        + `${S.regenerate_btn}</button>`
-        + '</div></div></div>'
-        + buildCostTab()
-        + buildTipsTab()
-        + '</div></div></div>';
+  return `
+  <div id="imageia-overlay" style="
+    position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="
+      background:#fff;border-radius:14px;padding:0;width:720px;
+      max-width:96vw;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;
+      box-shadow:0 16px 56px rgba(0,0,0,.35);">
+
+      <!-- En-tête fixe -->
+      <div style="padding:22px 28px 0;flex-shrink:0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+          <div>
+            <h2 style="margin:0;font-size:1.15rem;color:#111;">🖼️ Générateur d'images pédagogiques IA</h2>
+            <p style="margin:3px 0 0;font-size:.77rem;color:#9ca3af;">OpenAI · TinyMCE Moodle Plugin v3</p>
+          </div>
+          <button id="imageia-close" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:#9ca3af;padding:0;line-height:1;">✕</button>
+        </div>
+
+        <!-- Barre d'onglets -->
+        <div style="display:flex;border-bottom:1px solid #e5e7eb;margin:0 -28px;padding:0 28px;overflow-x:auto;">
+          <button id="tab-btn-generate" style="${tabStyle(true)}" data-tab="generate">🚀 Générer</button>
+          <button id="tab-btn-cost"     style="${tabStyle(false)}" data-tab="cost">💰 Coûts &amp; Transparence</button>
+          <button id="tab-btn-tips"     style="${tabStyle(false)}" data-tab="tips">💡 Conseils de prompts</button>
+        </div>
+      </div>
+
+      <!-- Zone scrollable -->
+      <div style="padding:20px 28px 24px;overflow-y:auto;flex:1;">
+
+        <!-- ══════════ ONGLET GÉNÉRER ══════════ -->
+        <div id="tab-generate">
+
+          <!-- Sélecteur de modèle -->
+          <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:8px;">🤖 Modèle IA</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <label id="lbl-gpt2" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #7c3aed;border-radius:8px;cursor:pointer;background:#faf5ff;">
+              <input type="radio" name="imageia-model" value="gpt-image-2" checked>
+              <div>
+                <div style="font-weight:700;color:#7c3aed;font-size:.88rem;">gpt-image-2
+                  <span style="background:#7c3aed;color:#fff;font-size:.64rem;padding:1px 6px;border-radius:99px;margin-left:4px;">✨ NOUVEAU</span>
+                </div>
+                <div style="font-size:.74rem;color:#6b7280;">Recommandé — schémas, texte, infographies</div>
+              </div>
+            </label>
+          </div>
+
+          <div id="imageia-model-card" style="margin-bottom:14px;">${buildModelCard('gpt-image-2')}</div>
+          <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 14px;">
+
+          <!-- Banque de prompts -->
+          <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:6px;">📚 Banque de prompts pédagogiques</label>
+          <select id="imageia-bank" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:.86rem;margin-bottom:12px;color:#374151;">
+            ${buildBankOptions()}
+          </select>
+
+          <!-- Prompt -->
+          <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:6px;">
+            ✏️ Prompt <span style="font-weight:400;color:#9ca3af;">(modifiable avant envoi)</span>
+          </label>
+          <textarea id="imageia-prompt" rows="4"
+            placeholder="Décrivez l'image souhaitée : sujet, public cible, style visuel, couleurs, contraintes…"
+            style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;
+                   font-size:.86rem;resize:vertical;box-sizing:border-box;line-height:1.6;color:#111;"></textarea>
+
+          <!-- Taille + Qualité + coût estimé -->
+          <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="flex:1;min-width:150px;">
+              <label style="font-size:.82rem;color:#374151;font-weight:700;display:block;margin-bottom:4px;">📐 Taille</label>
+              <select id="imageia-size" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:.82rem;">
+                ${buildSizeOptions('gpt-image-2')}
+              </select>
+            </div>
+            <div style="flex:1;min-width:150px;">
+              <label style="font-size:.82rem;color:#374151;font-weight:700;display:block;margin-bottom:4px;">⚡ Qualité</label>
+              <select id="imageia-quality" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:.82rem;">
+                ${buildQualityOptions('gpt-image-2')}
+              </select>
+            </div>
+            <div id="cost-estimate-box" style="flex:0 0 auto;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:7px;padding:7px 12px;text-align:center;">
+              <div style="font-size:.7rem;color:#7c3aed;font-weight:600;">Coût estimé</div>
+              <div id="cost-estimate-value" style="font-size:1rem;font-weight:700;color:#7c3aed;">≈ 0,053 $</div>
+              <div style="font-size:.66rem;color:#9ca3af;">par image</div>
+            </div>
+          </div>
+
+          <!-- Conseil -->
+          <div id="imageia-tip" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:5px;padding:10px 14px;margin-top:12px;font-size:.8rem;color:#374151;line-height:1.55;">
+            ${MODEL_INFO['gpt-image-2'].tip}
+          </div>
+
+          <!-- Bouton générer -->
+          <button id="imageia-generate" style="
+            margin-top:14px;width:100%;padding:13px;
+            background:linear-gradient(135deg,#7c3aed,#4f46e5);
+            color:#fff;border:none;border-radius:9px;font-size:.98rem;
+            font-weight:700;cursor:pointer;letter-spacing:.01em;">
+            🚀 Générer avec gpt-image-2
+          </button>
+
+          <!-- Résultat -->
+          <div id="imageia-result" style="margin-top:18px;display:none;text-align:center;">
+            <div id="imageia-loading" style="display:none;padding:24px;">
+              <div style="font-size:1.8rem;margin-bottom:6px;">⏳</div>
+              <div id="loading-model-label" style="color:#7c3aed;font-weight:700;font-size:.93rem;">Génération en cours…</div>
+              <div style="color:#9ca3af;font-size:.8rem;margin-top:4px;">Cela prend généralement 15–40 secondes.</div>
+            </div>
+            <div id="imageia-error" style="display:none;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:12px 14px;border-radius:7px;margin-bottom:12px;text-align:left;font-size:.86rem;line-height:1.5;"></div>
+            <img id="imageia-img" style="max-width:100%;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.18);display:none;" alt="Image pédagogique générée par IA"/>
+            <div id="imageia-prompt-used" style="display:none;margin-top:8px;font-size:.76rem;color:#9ca3af;font-style:italic;text-align:left;padding:0 4px;"></div>
+            <div id="imageia-actions" style="display:none;margin-top:12px;gap:10px;justify-content:center;flex-wrap:wrap;">
+              <button id="imageia-insert" style="padding:10px 20px;background:#10b981;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-size:.88rem;">
+                ✅ Insérer dans l'éditeur
+              </button>
+              <a id="imageia-download" download="image-pedagogique-ia.png" style="padding:10px 20px;background:#6366f1;color:#fff;border-radius:7px;text-decoration:none;font-weight:700;font-size:.88rem;display:inline-block;">
+                ⬇️ Télécharger PNG
+              </a>
+              <button id="imageia-regenerate" style="padding:10px 20px;background:#f9fafb;color:#374151;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-weight:600;font-size:.88rem;">
+                🔄 Régénérer
+              </button>
+            </div>
+          </div>
+
+        </div>
+        <!-- ══════════ FIN ONGLET GÉNÉRER ══════════ -->
+
+        ${buildCostTab()}
+        ${buildTipsTab()}
+
+      </div>
+    </div>
+  </div>`;
 }
 
-/**
- * Update the cost estimate display based on current model and quality.
- *
- * @param {HTMLElement} wrapper The dialog wrapper element.
- */
-function updateCostEstimate(wrapper) {
-    const modelInput = wrapper.querySelector('input[name="imageia-model"]:checked');
-    const qualSelect = document.getElementById('imageia-quality');
-    const costBox = document.getElementById('cost-estimate-value');
-    const costContainer = document.getElementById('cost-estimate-box');
-    if (!modelInput || !qualSelect || !costBox) {
-        return;
-    }
-    const modelKey = modelInput.value;
-    const quality = qualSelect.value;
-    const cost = COST_MAP[modelKey] ? COST_MAP[modelKey][quality] : undefined;
-    if (cost !== undefined) {
-        costBox.textContent = `approx. $${cost.toFixed(3)}`;
-        if (cost < 0.01) {
-            costContainer.style.background = '#f0fdf4';
-            costContainer.style.borderColor = '#bbf7d0';
-            costBox.style.color = '#059669';
-        } else if (cost < 0.1) {
-            costContainer.style.background = '#f5f3ff';
-            costContainer.style.borderColor = '#ddd6fe';
-            costBox.style.color = '#7c3aed';
-        } else {
-            costContainer.style.background = '#fef2f2';
-            costContainer.style.borderColor = '#fecaca';
-            costBox.style.color = '#dc2626';
-        }
-    }
+// ─── Coûts par modèle+qualité ─────────────────────────────────────────────────
+const COST_MAP = {
+  'gpt-image-2': { low: 0.006, medium: 0.053, high: 0.211 }
+};
+// ─── Logique principale ───────────────────────────────────────────────────────
+
+function buildImageRequest(model, prompt, size, quality) {
+  const request = {model, prompt, n: 1, size, quality};
+  // OpenAI GPT image models always return base64 and do not support response_format.
+  // DALL·E models need response_format=b64_json if we want to insert the image directly.
+    return request;
 }
 
-/**
- * Switch to the specified dialog tab.
- *
- * @param {string} name The tab name: generate, cost, or tips.
- */
-function switchTab(name) {
-    ['generate', 'cost', 'tips'].forEach((t) => {
-        const content = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`tab-btn-${t}`);
-        const isActive = t === name;
-        if (content) {
-            content.style.display = isActive ? 'block' : 'none';
-        }
-        if (btn) {
-            btn.style.borderBottom = isActive
-                ? '3px solid #7c3aed' : '3px solid transparent';
-            btn.style.fontWeight = isActive ? '700' : '500';
-            btn.style.color = isActive ? '#7c3aed' : '#6b7280';
-        }
-    });
-}
-
-/**
- * Run the budget simulator and display results.
- */
-function runSimulator() {
-    const teachersEl = document.getElementById('sim-teachers');
-    const imagesEl = document.getElementById('sim-images');
-    const weeksEl = document.getElementById('sim-weeks');
-    const modelEl = document.getElementById('sim-model');
-    const resultEl = document.getElementById('sim-result');
-    if (!teachersEl || !imagesEl || !weeksEl || !modelEl || !resultEl) {
-        return;
-    }
-    const teachers = parseInt(teachersEl.value) || 5;
-    const images = parseInt(imagesEl.value) || 10;
-    const weeks = parseInt(weeksEl.value) || 36;
-    const costPerImage = parseFloat(modelEl.value) || 0.053;
-    const perWeek = teachers * images * costPerImage;
-    const perMonth = perWeek * (weeks / 12);
-    const perYear = perWeek * weeks;
-    let color;
-    if (perYear < 50) {
-        color = '#059669';
-    } else if (perYear < 200) {
-        color = '#d97706';
-    } else {
-        color = '#dc2626';
-    }
-    const cap = (perMonth * 1.3).toFixed(2);
-    const tip = S.sim_tip.replace('{$a}', `$${cap}`);
-    resultEl.style.display = 'block';
-    resultEl.innerHTML = '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;">'
-        + '<div style="padding:12px;border-right:1px solid #e5e7eb;">'
-        + `<div style="font-size:.73rem;color:#6b7280;">${S.sim_perweek}</div>`
-        + `<div style="font-size:1rem;font-weight:700;">$${perWeek.toFixed(2)}</div></div>`
-        + '<div style="padding:12px;border-right:1px solid #e5e7eb;">'
-        + `<div style="font-size:.73rem;color:#6b7280;">${S.sim_permonth}</div>`
-        + `<div style="font-size:1rem;font-weight:700;">$${perMonth.toFixed(2)}</div></div>`
-        + '<div style="padding:12px;">'
-        + `<div style="font-size:.73rem;color:#6b7280;">${S.sim_peryear}</div>`
-        + `<div style="font-size:1.1rem;font-weight:700;color:${color};">`
-        + `$${perYear.toFixed(2)}</div></div></div>`
-        + '<div style="padding:9px 12px;background:#fffbeb;border-top:1px solid #fde68a;'
-        + `font-size:.77rem;color:#92400e;">${tip}</div></div>`;
-}
-
-/**
- * Open the image generation dialog.
- *
- * @param {Object} editor The TinyMCE editor instance.
- * @param {string} apiKey The OpenAI API key.
- */
 function openImageIADialog(editor, apiKey) {
-    const modelInfo = getModelInfo();
-    const promptBank = getPromptBank();
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = buildModalHTML(modelInfo, promptBank);
-    document.body.appendChild(wrapper);
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = buildModalHTML();
+  document.body.appendChild(wrapper);
 
-    // Tab navigation.
-    ['generate', 'cost', 'tips'].forEach((t) => {
-        const btn = document.getElementById(`tab-btn-${t}`);
-        if (btn) {
-            btn.addEventListener('click', () => switchTab(t));
-        }
+  const $ = id => document.getElementById(id);
+
+  // Refs
+  const overlay        = $('imageia-overlay');
+  const bankSelect     = $('imageia-bank');
+  const promptTA       = $('imageia-prompt');
+  const genBtn         = $('imageia-generate');
+  const resultDiv      = $('imageia-result');
+  const loadingDiv     = $('imageia-loading');
+  const loadingLabel   = $('loading-model-label');
+  const errorDiv       = $('imageia-error');
+  const imgEl          = $('imageia-img');
+  const actionsDiv     = $('imageia-actions');
+  const insertBtn      = $('imageia-insert');
+  const downloadA      = $('imageia-download');
+  const regenBtn       = $('imageia-regenerate');
+  const modelCard      = $('imageia-model-card');
+  const tipDiv         = $('imageia-tip');
+  const promptUsed     = $('imageia-prompt-used');
+  const sizeSelect     = $('imageia-size');
+  const qualSelect     = $('imageia-quality');
+  const costBox        = $('cost-estimate-value');
+
+  function getModel() {
+    return wrapper.querySelector('input[name="imageia-model"]:checked').value;
+  }
+
+  // ── Mise à jour du coût estimé ──
+  function updateCostEstimate() {
+    const m = getModel();
+    const q = qualSelect.value;
+    const cost = COST_MAP[m]?.[q];
+    if (cost !== undefined) {
+      costBox.textContent = `≈ ${cost.toFixed(3)} $`;
+      $('cost-estimate-box').style.borderColor = cost < 0.01 ? '#bbf7d0' : cost < 0.1 ? '#ddd6fe' : '#fecaca';
+      $('cost-estimate-box').style.background  = cost < 0.01 ? '#f0fdf4' : cost < 0.1 ? '#f5f3ff' : '#fef2f2';
+      costBox.style.color = cost < 0.01 ? '#059669' : cost < 0.1 ? '#7c3aed' : '#dc2626';
+    }
+  }
+
+  qualSelect.addEventListener('change', updateCostEstimate);
+
+  // ── Changement de modèle ──
+  wrapper.querySelectorAll('input[name="imageia-model"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const m    = radio.value;
+      const info = MODEL_INFO[m];
+
+      // Bordures des cartes radio
+      $('lbl-gpt2').style.border   = m === 'gpt-image-2' ? '2px solid #7c3aed' : '2px solid #e5e7eb';
+      $('lbl-gpt2').style.background   = m === 'gpt-image-2' ? '#faf5ff' : '#f9fafb';
+      modelCard.innerHTML    = buildModelCard(m);
+      sizeSelect.innerHTML   = buildSizeOptions(m);
+      qualSelect.innerHTML   = buildQualityOptions(m);
+      tipDiv.style.background  = info.tipBg;
+      tipDiv.style.borderColor = info.tipBorder;
+      tipDiv.innerHTML = info.tip;
+      genBtn.style.background  = info.gradient;
+      genBtn.textContent = `🚀 Générer avec ${m}`;
+      updateCostEstimate();
     });
+  });
 
-    // Quality change.
-    const qualSelect = document.getElementById('imageia-quality');
-    if (qualSelect) {
-        qualSelect.addEventListener('change', () => updateCostEstimate(wrapper));
-    }
-
-    // Model change.
-    wrapper.querySelectorAll('input[name="imageia-model"]').forEach((radio) => {
-        radio.addEventListener('change', () => {
-            const m = radio.value;
-            const info = modelInfo[m];
-            const lblGpt2 = document.getElementById('lbl-gpt2');
-            const lblDalle3 = document.getElementById('lbl-dalle3');
-            const modelCard = document.getElementById('imageia-model-card');
-            const sizeEl = document.getElementById('imageia-size');
-            const qualEl = document.getElementById('imageia-quality');
-            const tipEl = document.getElementById('imageia-tip');
-            const genBtn = document.getElementById('imageia-generate');
-            if (lblGpt2) {
-                lblGpt2.style.border = m === 'gpt-image-2'
-                    ? '2px solid #7c3aed' : '2px solid #e5e7eb';
-                lblGpt2.style.background = m === 'gpt-image-2' ? '#faf5ff' : '#f9fafb';
-            }
-            if (lblDalle3) {
-                lblDalle3.style.border = m === 'dall-e-3'
-                    ? '2px solid #2563eb' : '2px solid #e5e7eb';
-                lblDalle3.style.background = m === 'dall-e-3' ? '#eff6ff' : '#f9fafb';
-            }
-            if (modelCard) {
-                modelCard.innerHTML = buildModelCard(m, modelInfo);
-            }
-            if (sizeEl) {
-                sizeEl.innerHTML = buildSizeOptions(m, modelInfo);
-            }
-            if (qualEl) {
-                qualEl.innerHTML = buildQualityOptions(m, modelInfo);
-            }
-            if (tipEl) {
-                tipEl.style.background = info.tipBg;
-                tipEl.style.borderColor = info.tipBorder;
-                tipEl.innerHTML = info.tip;
-            }
-            if (genBtn) {
-                genBtn.style.background = info.gradient;
-                genBtn.textContent = S.generate_btn.replace('{$a}', m);
-            }
-            updateCostEstimate(wrapper);
-        });
+  // ── Onglets ──
+  function switchTab(name) {
+    ['generate','cost','tips'].forEach(t => {
+      const content = $(`tab-${t}`);
+      const btn     = $(`tab-btn-${t}`);
+      const active  = t === name;
+      if (content) content.style.display = active ? 'block' : 'none';
+      if (btn) {
+        btn.style.borderBottom = active ? '3px solid #7c3aed' : '3px solid transparent';
+        btn.style.fontWeight   = active ? '700' : '500';
+        btn.style.color        = active ? '#7c3aed' : '#6b7280';
+      }
     });
+  }
 
-    // Prompt bank selection.
-    const bankSelect = document.getElementById('imageia-bank');
-    const promptTA = document.getElementById('imageia-prompt');
-    if (bankSelect && promptTA) {
-        bankSelect.addEventListener('change', () => {
-            if (bankSelect.value) {
-                promptTA.value = bankSelect.value;
-            }
-        });
+  ['generate','cost','tips'].forEach(t => {
+    const btn = $(`tab-btn-${t}`);
+    if (btn) btn.addEventListener('click', () => switchTab(t));
+  });
+
+  // ── Simulateur budgétaire ──
+  const simCalc = $('sim-calc');
+  if (simCalc) {
+    simCalc.addEventListener('click', () => {
+      const teachers = parseInt($('sim-teachers').value) || 5;
+      const images   = parseInt($('sim-images').value)   || 10;
+      const weeks    = parseInt($('sim-weeks').value)    || 36;
+      const modelKey = $('sim-model').value;
+
+      const costPerImage = {
+        'gpt-image-2-low':    0.006,
+        'gpt-image-2-medium': 0.053,
+        'gpt-image-2-high':   0.211,
+      }[modelKey] || 0.053;
+
+      const perWeek  = teachers * images * costPerImage;
+      const perMonth = perWeek * (weeks / 12);
+      const perYear  = perWeek * weeks;
+
+      const fmt = n => n.toFixed(2);
+      const color = perYear < 50 ? '#059669' : perYear < 200 ? '#d97706' : '#dc2626';
+
+      $('sim-result').style.display = 'block';
+      $('sim-result').innerHTML = `
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+          <div style="background:#f9fafb;padding:10px 14px;font-size:.82rem;color:#374151;border-bottom:1px solid #e5e7eb;">
+            <strong>${teachers} enseignant${teachers>1?'s':''}</strong> × <strong>${images} image${images>1?'s':''}/semaine</strong>
+            × <strong>${weeks} semaines</strong> — coût unitaire <strong>${costPerImage.toFixed(3)} $</strong>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;">
+            <div style="padding:14px 10px;border-right:1px solid #e5e7eb;">
+              <div style="font-size:.75rem;color:#6b7280;margin-bottom:4px;">Par semaine</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#374151;">${fmt(perWeek)} $</div>
+            </div>
+            <div style="padding:14px 10px;border-right:1px solid #e5e7eb;">
+              <div style="font-size:.75rem;color:#6b7280;margin-bottom:4px;">Par mois</div>
+              <div style="font-size:1.1rem;font-weight:700;color:#374151;">${fmt(perMonth)} $</div>
+            </div>
+            <div style="padding:14px 10px;">
+              <div style="font-size:.75rem;color:#6b7280;margin-bottom:4px;">Par année scolaire</div>
+              <div style="font-size:1.3rem;font-weight:700;color:${color};">${fmt(perYear)} $</div>
+            </div>
+          </div>
+          <div style="padding:10px 14px;background:#fffbeb;border-top:1px solid #fde68a;font-size:.78rem;color:#92400e;">
+            💡 <strong>Conseil :</strong> Fixez une limite mensuelle de <strong>${fmt(perMonth * 1.3)} $</strong> dans votre dashboard OpenAI pour absorber les variations sans dépassement.
+          </div>
+        </div>`;
+    });
+  }
+
+  // ── Banque → textarea ──
+  bankSelect.addEventListener('change', () => {
+    if (bankSelect.value) promptTA.value = bankSelect.value;
+  });
+
+  // ── Fermeture ──
+  $('imageia-close').addEventListener('click', () => document.body.removeChild(wrapper));
+  overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(wrapper); });
+
+  // ── Génération ──
+  async function generate() {
+    const prompt = promptTA.value.trim();
+    if (!prompt) { alert('Veuillez saisir ou sélectionner un prompt.'); return; }
+    if (!apiKey) {
+      alert('Clé API OpenAI manquante.\nAllez dans :\nAdministration → Plugins → Éditeurs de texte → ImageIA pédagogique');
+      return;
     }
 
-    // Simulator.
-    const simCalc = document.getElementById('sim-calc');
-    if (simCalc) {
-        simCalc.addEventListener('click', runSimulator);
+    const m       = getModel();
+    const size    = sizeSelect.value;
+    const quality = qualSelect.value;
+
+    resultDiv.style.display   = 'block';
+    loadingDiv.style.display  = 'block';
+    loadingLabel.style.color  = MODEL_INFO[m].badgeColor;
+    errorDiv.style.display    = 'none';
+    imgEl.style.display       = 'none';
+    actionsDiv.style.display  = 'none';
+    promptUsed.style.display  = 'none';
+    genBtn.disabled           = true;
+    genBtn.style.opacity      = '0.65';
+    genBtn.textContent        = '⏳ Génération en cours…';
+
+    try {
+      const resp = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(buildImageRequest(m, prompt, size, quality)),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error?.message || `Erreur API ${resp.status}`);
+
+      const src = `data:image/png;base64,${data.data[0].b64_json}`;
+      imgEl.src = src; imgEl.style.display = 'block';
+      downloadA.href = src;
+      actionsDiv.style.display = 'flex';
+
+      const rev = data.data[0].revised_prompt;
+      if (rev) {
+        promptUsed.style.display = 'block';
+        promptUsed.textContent = `Prompt interprété : "${rev.substring(0, 140)}…"`;
+      }
+
+    } catch (err) {
+      errorDiv.innerHTML = `❌ <strong>Erreur :</strong> ${err.message}<br><small style="color:#9ca3af;">Vérifiez votre clé API et vos crédits OpenAI.</small>`;
+      errorDiv.style.display = 'block';
+    } finally {
+      loadingDiv.style.display = 'none';
+      genBtn.disabled = false; genBtn.style.opacity = '1';
+      genBtn.textContent = `🚀 Générer avec ${getModel()}`;
     }
+  }
 
-    // Close.
-    const closeBtn = document.getElementById('imageia-close');
-    const overlay = document.getElementById('imageia-overlay');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => document.body.removeChild(wrapper));
+  genBtn.addEventListener('click', generate);
+  regenBtn.addEventListener('click', generate);
+
+  // ── Insertion TinyMCE ──
+  insertBtn.addEventListener('click', () => {
+    if (imgEl.src) {
+      editor.insertContent(`<img src="${imgEl.src}" alt="Image pédagogique générée par IA (${getModel()})" style="max-width:100%;height:auto;border-radius:4px;" />`);
+      document.body.removeChild(wrapper);
     }
-    if (overlay) {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                document.body.removeChild(wrapper);
-            }
-        });
-    }
+  });
 
-    /**
-     * Call the OpenAI API and handle the response.
-     *
-     * @returns {Promise<void>}
-     */
-    /**
-     * Set UI into loading state.
-     *
-     * @param {string} modelKey Selected model key.
-     * @param {Object} modelData Model info object.
-     */
-    function setLoadingState(modelKey, modelData) {
-        const ids = {
-            result: 'imageia-result', loading: 'imageia-loading',
-            loadingLbl: 'loading-label', error: 'imageia-error',
-            img: 'imageia-img', actions: 'imageia-actions',
-            revised: 'imageia-revised', btn: 'imageia-generate',
-        };
-        const el = {};
-        Object.keys(ids).forEach((k) => {
-            el[k] = document.getElementById(ids[k]);
-        });
-        if (el.result) {
-            el.result.style.display = 'block';
-        }
-        if (el.loading) {
-            el.loading.style.display = 'block';
-        }
-        if (el.loadingLbl) {
-            el.loadingLbl.style.color = modelData[modelKey].badgeColor;
-        }
-        if (el.error) {
-            el.error.style.display = 'none';
-        }
-        if (el.img) {
-            el.img.style.display = 'none';
-        }
-        if (el.actions) {
-            el.actions.style.display = 'none';
-        }
-        if (el.revised) {
-            el.revised.style.display = 'none';
-        }
-        if (el.btn) {
-            el.btn.disabled = true;
-            el.btn.style.opacity = '0.65';
-            el.btn.textContent = S.generating;
-        }
-    }
-
-    /**
-     * Reset UI after API call.
-     *
-     * @param {string} fallbackModel Fallback model key.
-     */
-    function resetLoadingState(fallbackModel) {
-        const loadingDiv = document.getElementById('imageia-loading');
-        const genBtn = document.getElementById('imageia-generate');
-        if (loadingDiv) {
-            loadingDiv.style.display = 'none';
-        }
-        if (genBtn) {
-            const cm = wrapper.querySelector('input[name="imageia-model"]:checked');
-            genBtn.disabled = false;
-            genBtn.style.opacity = '1';
-            genBtn.textContent = S.generate_btn.replace('{$a}', cm ? cm.value : fallbackModel);
-        }
-    }
-
-    /**
-     * Update UI with successful image generation result.
-     *
-     * @param {string} src Base64 image data URL.
-     * @param {string|undefined} revisedPrompt Revised prompt from OpenAI.
-     */
-    function handleSuccess(src, revisedPrompt) {
-        const imgEl = document.getElementById('imageia-img');
-        const downloadA = document.getElementById('imageia-download');
-        const actionsDiv = document.getElementById('imageia-actions');
-        const revisedEl = document.getElementById('imageia-revised');
-        if (imgEl) {
-            imgEl.src = src;
-            imgEl.style.display = 'block';
-        }
-        if (downloadA) {
-            downloadA.href = src;
-        }
-        if (actionsDiv) {
-            actionsDiv.style.display = 'flex';
-        }
-        if (revisedPrompt && revisedEl) {
-            revisedEl.style.display = 'block';
-            revisedEl.textContent = `${S.revised_prompt} "${revisedPrompt.substring(0, 140)}..."`;
-        }
-    }
-
-    /**
-     * Call the OpenAI API and update the UI.
-     *
-     * @returns {Promise<void>}
-     */
-    async function generate() {
-        const prompt = promptTA ? promptTA.value.trim() : '';
-        if (!prompt) {
-            window.console.warn(S.error_noprompt);
-            return;
-        }
-        if (!apiKey) {
-            window.console.warn(S.error_noapikey);
-            return;
-        }
-
-        const modelInput = wrapper.querySelector('input[name="imageia-model"]:checked');
-        const sizeEl = document.getElementById('imageia-size');
-        const qualEl = document.getElementById('imageia-quality');
-        const m = modelInput ? modelInput.value : 'gpt-image-2';
-        const size = sizeEl ? sizeEl.value : '1024x1024';
-        const quality = qualEl ? qualEl.value : 'medium';
-
-        setLoadingState(m, modelInfo);
-
-        const apiFormatKey = ['response', 'format'].join('_');
-        const requestBody = {
-            model: m,
-            prompt: prompt,
-            n: 1,
-            size: size,
-            quality: quality,
-        };
-        requestBody[apiFormatKey] = 'b64_json';
-
-        try {
-            const resp = await fetch('https://api.openai.com/v1/images/generations', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-                body: JSON.stringify(requestBody),
-            });
-            const data = await resp.json();
-            if (!resp.ok) {
-                throw new Error(data.error ? data.error.message : `API error ${resp.status}`);
-            }
-            handleSuccess(
-                `data:image/png;base64,${data.data[0].b64_json}`,
-                data.data[0].revised_prompt
-            );
-        } catch (err) {
-            const errorDiv = document.getElementById('imageia-error');
-            if (errorDiv) {
-                errorDiv.textContent = `${S.error_prefix} ${err.message}`;
-                errorDiv.style.display = 'block';
-            }
-        } finally {
-            resetLoadingState(m);
-        }
-    }
-
-    const genBtn = document.getElementById('imageia-generate');
-    const regenBtn = document.getElementById('imageia-regenerate');
-    if (genBtn) {
-        genBtn.addEventListener('click', generate);
-    }
-    if (regenBtn) {
-        regenBtn.addEventListener('click', generate);
-    }
-
-    // Insert into editor.
-    const insertBtn = document.getElementById('imageia-insert');
-    if (insertBtn) {
-        insertBtn.addEventListener('click', () => {
-            const imgEl = document.getElementById('imageia-img');
-            if (imgEl && imgEl.src) {
-                const currentModel = wrapper.querySelector(
-                    'input[name="imageia-model"]:checked'
-                );
-                const usedModel = currentModel ? currentModel.value : 'gpt-image-2';
-                editor.insertContent(
-                    `<img src="${imgEl.src}" alt="${S.img_alt} (${usedModel})" `
-                    + 'style="max-width:100%;height:auto;border-radius:4px;" />'
-                );
-                document.body.removeChild(wrapper);
-            }
-        });
-    }
-
-    updateCostEstimate(wrapper);
+  updateCostEstimate();
 }
 
-/**
- * Register the plugin button, menu item and custom icon with TinyMCE.
- *
- * @param {Object} editor The TinyMCE editor instance.
- */
+
 const setupCommands = (editor) => {
-    editor.ui.registry.addIcon(
-        'imageia',
-        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"'
-        + ' fill="none"><rect x="1" y="5" width="18" height="14" rx="2"'
-        + ' stroke="currentColor" stroke-width="1.7" fill="none"/>'
-        + '<path d="M1 13 L5.5 8 L9 11 L12 9 L19 13" stroke="currentColor"'
-        + ' stroke-width="1.5" stroke-linejoin="round" fill="none"/>'
-        + '<circle cx="5.5" cy="10" r="1.5" fill="currentColor"/>'
-        + '<path d="M20 0.5 L21.1 3.4 L24 4.5 L21.1 5.6 L20 8.5 L18.9 5.6 L16 4.5'
-        + ' L18.9 3.4 Z" fill="currentColor"/>'
-        + '<circle cx="23" cy="9.5" r="1" fill="currentColor" opacity="0.6"/>'
-        + '<circle cx="17.5" cy="10.5" r="0.7" fill="currentColor" opacity="0.4"/></svg>'
-    );
-    editor.ui.registry.addButton(buttonName, {
-        icon: 'imageia',
-        tooltip: 'Generate a pedagogical AI image',
-        onAction: () => loadStrings().then(() => openImageIADialog(editor, getApiKey(editor))),
-    });
-    editor.ui.registry.addMenuItem(menuItemName, {
-        icon: 'imageia',
-        text: 'Generate a pedagogical AI image',
-        onAction: () => loadStrings().then(() => openImageIADialog(editor, getApiKey(editor))),
-    });
+  editor.ui.registry.addButton(buttonName, {
+    text: 'Image IA',
+    tooltip: 'Générer une image IA pédagogique',
+    onAction: () => openImageIADialog(editor, getApiKey(editor)),
+  });
+  editor.ui.registry.addMenuItem(menuItemName, {
+    text: 'Générer une image IA pédagogique',
+    onAction: () => openImageIADialog(editor, getApiKey(editor)),
+  });
 };
 
-const initPromise = Promise.all([
+export default new Promise(async(resolve) => {
+  const [tinyMCE, pluginMetadata] = await Promise.all([
     getTinyMCE(),
     getPluginMetadata(component, pluginName),
-]).then(([tinyMCE, pluginMetadata]) => {
-    tinyMCE.PluginManager.add(pluginName, (editor) => {
-        registerOptions(editor);
-        setupCommands(editor);
-        return pluginMetadata;
-    });
-    return [pluginName, Configuration];
-});
+  ]);
 
-export default initPromise;
+  tinyMCE.PluginManager.add(pluginName, (editor) => {
+    registerOptions(editor);
+    setupCommands(editor);
+    return pluginMetadata;
+  });
+
+  resolve([pluginName, Configuration]);
+});

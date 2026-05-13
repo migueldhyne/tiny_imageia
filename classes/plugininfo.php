@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,10 +12,10 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin info for tiny_imageia.
+ * Tiny ImageIA plugin info.
  *
  * @package    tiny_imageia
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
@@ -32,13 +32,14 @@ use editor_tiny\plugin_with_configuration;
 use editor_tiny\plugin_with_menuitems;
 
 /**
- * Plugin info class for tiny_imageia.
+ * Tiny ImageIA plugin info class.
  *
  * @package    tiny_imageia
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class plugininfo extends plugin implements plugin_with_buttons, plugin_with_configuration, plugin_with_menuitems {
+
     /**
      * Returns the list of buttons provided by this plugin.
      *
@@ -62,7 +63,7 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
     }
 
     /**
-     * Returns whether the plugin is enabled for the given context.
+     * Returns whether this plugin is enabled for the given context.
      *
      * @param context $context
      * @param array $options
@@ -80,7 +81,7 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
     }
 
     /**
-     * Returns the plugin configuration for the given context.
+     * Returns plugin configuration for a given context.
      *
      * @param context $context
      * @param array $options
