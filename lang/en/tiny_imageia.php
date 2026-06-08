@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['apierror'] = 'OpenAI API error: {$a}';
 $string['apikey'] = 'OpenAI API key';
 $string['apikey_desc'] = 'Enter your OpenAI API key (sk-...). Obtain it at platform.openai.com.';
 $string['best_1'] = 'Start with <strong>low</strong> quality to test your prompt, then switch to <strong>medium</strong> or <strong>high</strong> for the final version.';
@@ -56,16 +57,21 @@ $string['error_no_prompt'] = 'Please enter or select a prompt.';
 $string['error_prefix'] = 'Error:';
 $string['generate_btn'] = 'Generate';
 $string['generating'] = 'Generating…';
+$string['generating_hint'] = 'This usually takes 15–40 seconds.';
 $string['img_alt'] = 'AI-generated pedagogical image';
 $string['insert_btn'] = 'Insert into editor';
+$string['missingapikey'] = 'OpenAI API key is missing.';
 $string['model_badge'] = 'NEW';
 $string['model_desc'] = 'OpenAI\'s most powerful model (2025). Best for infographics, text in images, scientific diagrams and photorealism. Best quality on first attempt.';
 $string['model_label'] = 'AI Model';
 $string['model_sub'] = 'Recommended — diagrams, text, infographics';
 $string['model_tip'] = '<strong>Tip gpt-image-2:</strong> Use <em>medium</em> or <em>high</em> quality for diagrams with text. Specify the target audience, visual style and add <em>"white background, no watermark"</em>.';
+$string['networkerror'] = 'Unable to contact the OpenAI API.';
 $string['pluginname'] = 'Pedagogical AI Image';
 $string['privacy:metadata'] = 'The tiny_imageia plugin sends prompts to the OpenAI API to generate images. No personal data is stored locally.';
-$string['privacy_body'] = 'Prompts are sent to OpenAI servers (USA) for processing. Never include students\'s personal data in prompts. Review OpenAI\'s privacy policy and your institution\'s data governance rules before enabling student access.';
+$string['privacy:metadata:openai_api'] = 'User-supplied image prompts are transmitted to the OpenAI API (https://api.openai.com) for image generation. Please review OpenAI\'s privacy policy before enabling this plugin.';
+$string['privacy:metadata:openai_api:prompt'] = 'The text prompt describing the image to generate, as entered by the user.';
+$string['privacy_body'] = 'Prompts are sent to OpenAI servers (USA) for processing. Never include students\' personal data in prompts. Review OpenAI\'s privacy policy and your institution\'s data governance rules before enabling student access.';
 $string['privacy_title'] = 'Data & Privacy';
 $string['prompt_alg_1'] = 'Create an infographic titled \'Order of Operations (BODMAS/PEMDAS)\' for middle school. Show Brackets → Exponents → Multiplication/Division → Addition/Subtraction with a worked example. Orange and blue palette, white background.';
 $string['prompt_alg_2'] = 'Create a math infographic titled \'Pythagoras Theorem\' for middle school. Right triangle with sides a, b, c, the formula a²+b²=c², two numerical examples. Clean educational style, white background.';
@@ -97,6 +103,7 @@ $string['prompt_geo_3'] = 'Create a poster titled \'The Rock Cycle\' for middle 
 $string['prompt_geom_1'] = 'Create a poster titled \'Types of Triangles\' for middle school math. Show and label: equilateral, isoceles, scalene, right-angled, obtuse, acute with angle properties. Clean geometric style, blue palette, white background.';
 $string['prompt_geom_2'] = 'Create a diagram titled \'Area and Perimeter Formulas\' for middle school. Formulas for rectangle, triangle, circle and trapezoid with illustrated shapes. Clean educational style, white background.';
 $string['prompt_geom_3'] = 'Create a poster titled \'3D Shapes and Their Properties\'. Show cube, sphere, cylinder, cone, pyramid with faces, edges and vertices labeled. Isometric illustration, colorful, white background.';
+$string['prompt_hint'] = 'editable before sending';
 $string['prompt_hist_1'] = 'Create a timeline titled \'Key Events of World War II (1939-1945)\'. 6-8 major events in chronological order with small icons. Clean infographic, dark red and grey palette, white background.';
 $string['prompt_hist_2'] = 'Create a historical infographic titled \'The French Revolution (1789-1799)\'. Key phases with dates and brief descriptions. Blue, white, red palette, white background.';
 $string['prompt_hist_3'] = 'Create a diagram titled \'Causes of World War I (MAIN)\'. Show Militarism, Alliance system, Imperialism, Nationalism with icons and connecting arrows. Clean infographic, white background.';
@@ -143,6 +150,7 @@ $string['subj_sciences'] = 'Sciences';
 $string['tab_cost'] = 'Costs & Transparency';
 $string['tab_generate'] = 'Generate';
 $string['tab_tips'] = 'Prompt Tips';
+$string['tiny/imageia:use'] = 'Use the Pedagogical AI Image generator';
 $string['tips_do_1'] = 'Specify the target audience ("for high school students")';
 $string['tips_do_2'] = 'Add "white background, no watermark"';
 $string['tips_do_3'] = 'Put expected text in quotes';
@@ -185,9 +193,4 @@ $string['topic_geo'] = 'Geography';
 $string['topic_geom'] = 'Geometry';
 $string['topic_hist'] = 'History';
 $string['topic_phys'] = 'Physics';
-
-$string['privacy:metadata:openai_api'] = 'User-supplied image prompts are transmitted to the OpenAI API (https://api.openai.com) for image generation. Please review OpenAI\'s privacy policy before enabling this plugin.';
-$string['privacy:metadata:openai_api:prompt'] = 'The text prompt describing the image to generate, as entered by the user.';
-$string['tiny/imageia:use'] = 'Use the Pedagogical AI Image generator';
-$string['prompt_hint'] = 'editable before sending';
-$string['generating_hint'] = 'This usually takes 15–40 seconds.';
+$string['unexpectedresponse'] = 'Unexpected response from the OpenAI API.';

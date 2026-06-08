@@ -79,12 +79,12 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <label id="lbl-gpt2" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #7c3aed;border-radius:8px;cursor:pointer;background:#faf5ff;">
             <input type="radio" name="imageia-model" value="gpt-image-2" checked>
-            <div>
-              <div style="font-weight:700;color:#7c3aed;font-size:.88rem;">gpt-image-2
+            <span style="display:inline-block;">
+              <span style="display:block;font-weight:700;color:#7c3aed;font-size:.88rem;">gpt-image-2
                 <span style="background:#7c3aed;color:#fff;font-size:.64rem;padding:1px 6px;border-radius:99px;margin-left:4px;">{{#str}} model_badge, tiny_imageia {{/str}}</span>
-              </div>
-              <div style="font-size:.74rem;color:#6b7280;">{{#str}} model_sub, tiny_imageia {{/str}}</div>
-            </div>
+              </span>
+              <span style="display:block;font-size:.74rem;color:#6b7280;">{{#str}} model_sub, tiny_imageia {{/str}}</span>
+            </span>
           </label>
         </div>
 
@@ -145,13 +145,13 @@
             <div style="color:#9ca3af;font-size:.8rem;margin-top:4px;">{{#str}} generating_hint, tiny_imageia {{/str}}</div>
           </div>
           <div id="imageia-error" style="display:none;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:12px 14px;border-radius:7px;margin-bottom:12px;text-align:left;font-size:.86rem;line-height:1.5;" role="alert"></div>
-          <img id="imageia-img" style="max-width:100%;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.18);display:none;" alt="{{#str}} img_alt, tiny_imageia {{/str}}"/>
+          <img id="imageia-img" src="" style="max-width:100%;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.18);display:none;" alt="{{#str}} img_alt, tiny_imageia {{/str}}">
           <div id="imageia-prompt-used" style="display:none;margin-top:8px;font-size:.76rem;color:#9ca3af;font-style:italic;text-align:left;padding:0 4px;"></div>
           <div id="imageia-actions" style="display:none;margin-top:12px;gap:10px;justify-content:center;flex-wrap:wrap;">
             <button id="imageia-insert" style="padding:10px 20px;background:#10b981;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-size:.88rem;">
               {{#str}} insert_btn, tiny_imageia {{/str}}
             </button>
-            <a id="imageia-download" download="image-pedagogique-ia.png" style="padding:10px 20px;background:#6366f1;color:#fff;border-radius:7px;text-decoration:none;font-weight:700;font-size:.88rem;display:inline-block;">
+            <a id="imageia-download" href="#" download="image-pedagogique-ia.png" style="padding:10px 20px;background:#6366f1;color:#fff;border-radius:7px;text-decoration:none;font-weight:700;font-size:.88rem;display:inline-block;">
               {{#str}} download_btn, tiny_imageia {{/str}}
             </a>
             <button id="imageia-regenerate" style="padding:10px 20px;background:#f9fafb;color:#374151;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-weight:600;font-size:.88rem;">

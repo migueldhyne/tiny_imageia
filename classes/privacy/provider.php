@@ -25,7 +25,6 @@
 namespace tiny_imageia\privacy;
 
 use core_privacy\local\metadata\collection;
-use core_privacy\local\request\data_provider;
 
 /**
  * Privacy provider for tiny_imageia.
@@ -38,10 +37,7 @@ use core_privacy\local\request\data_provider;
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements
-    \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\data_provider {
-
+class provider implements \core_privacy\local\metadata\provider {
     /**
      * Returns metadata about data transmitted to external services.
      *

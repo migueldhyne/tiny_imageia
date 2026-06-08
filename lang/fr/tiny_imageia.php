@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['apierror'] = 'Erreur de l\'API OpenAI : {$a}';
 $string['apikey'] = 'Clé API OpenAI';
 $string['apikey_desc'] = 'Entrez votre clé API OpenAI (sk-...). Obtenez-la sur platform.openai.com.';
 $string['best_1'] = 'Commencez en qualité <strong>faible</strong> pour tester votre prompt, puis passez en <strong>moyen</strong> ou <strong>élevé</strong> pour la version finale.';
@@ -56,15 +57,20 @@ $string['error_no_prompt'] = 'Veuillez saisir ou sélectionner un prompt.';
 $string['error_prefix'] = 'Erreur :';
 $string['generate_btn'] = 'Générer';
 $string['generating'] = 'Génération en cours…';
+$string['generating_hint'] = 'Cela prend généralement 15–40 secondes.';
 $string['img_alt'] = 'Image pédagogique générée par IA';
 $string['insert_btn'] = 'Insérer dans l\'éditeur';
+$string['missingapikey'] = 'La clé API OpenAI est manquante.';
 $string['model_badge'] = 'NOUVEAU';
 $string['model_desc'] = 'Modèle le plus puissant d\'OpenAI (2025). Idéal pour les infographies, le texte dans les images, les schémas scientifiques et le photoréalisme. Meilleure qualité dès le premier essai.';
 $string['model_label'] = 'Modèle IA';
 $string['model_sub'] = 'Recommandé — schémas, texte, infographies';
 $string['model_tip'] = '<strong>Conseil gpt-image-2 :</strong> Pour les schémas avec du texte, choisissez <em>moyen</em> ou <em>élevé</em>. Précisez le public cible, le style visuel et ajoutez <em>« fond blanc, sans filigrane »</em>.';
+$string['networkerror'] = 'Impossible de contacter l\'API OpenAI.';
 $string['pluginname'] = 'Image IA pédagogique';
 $string['privacy:metadata'] = 'Le plugin tiny_imageia envoie les prompts à l\'API OpenAI pour générer des images. Aucune donnée personnelle n\'est stockée localement.';
+$string['privacy:metadata:openai_api'] = 'Les prompts saisis par l\'utilisateur sont transmis à l\'API OpenAI (https://api.openai.com) pour la génération d\'images. Veuillez consulter la politique de confidentialité d\'OpenAI avant d\'activer ce plugin.';
+$string['privacy:metadata:openai_api:prompt'] = 'Le texte du prompt décrivant l\'image à générer, tel que saisi par l\'utilisateur.';
 $string['privacy_body'] = 'Les prompts saisis sont envoyés aux serveurs d\'OpenAI (États-Unis) pour traitement. Ne saisissez jamais de données personnelles d\'élèves dans les prompts. Consultez la politique de confidentialité d\'OpenAI et le règlement de votre établissement avant d\'autoriser l\'accès aux étudiants.';
 $string['privacy_title'] = 'Données et vie privée';
 $string['prompt_alg_1'] = 'Créez une infographie intitulée \'Priorité des opérations\' pour le collège. Montrez Parenthèses → Exposants → Multiplication/Division → Addition/Soustraction avec un exemple résolu. Palette orange et bleue, fond blanc.';
@@ -97,6 +103,7 @@ $string['prompt_geo_3'] = 'Créez une affiche intitulée \'Le cycle des roches\'
 $string['prompt_geom_1'] = 'Créez une affiche intitulée \'Les types de triangles\' pour le collège. Montrez et légendez : équilatéral, isocèle, scalène, rectangle, obtusangle, acutangle avec propriétés des angles. Style géométrique épuré, palette bleue, fond blanc.';
 $string['prompt_geom_2'] = 'Créez un diagramme intitulé \'Formules d\'aire et de périmètre\' pour le collège. Formules pour rectangle, triangle, cercle et trapèze avec formes illustrées. Style pédagogique épuré, fond blanc.';
 $string['prompt_geom_3'] = 'Créez une affiche intitulée \'Les solides et leurs propriétés\'. Montrez cube, sphère, cylindre, cône, pyramide avec faces, arêtes et sommets légendés. Illustration isométrique, colorée, fond blanc.';
+$string['prompt_hint'] = 'modifiable avant envoi';
 $string['prompt_hist_1'] = 'Créez une frise chronologique intitulée \'Événements clés de la Seconde Guerre mondiale (1939-1945)\'. 6 à 8 événements majeurs en ordre chronologique avec petites icônes. Infographie épurée, palette rouge sombre et grise, fond blanc.';
 $string['prompt_hist_2'] = 'Créez une infographie intitulée \'La Révolution française (1789-1799)\'. Phases clés avec dates et descriptions brèves. Palette bleu, blanc, rouge, fond blanc.';
 $string['prompt_hist_3'] = 'Créez un diagramme intitulé \'Les causes de la Première Guerre mondiale (MAIN)\'. Montrez Militarisme, Alliances, Impérialisme, Nationalisme avec icônes et flèches. Infographie épurée, fond blanc.';
@@ -143,6 +150,7 @@ $string['subj_sciences'] = 'Sciences';
 $string['tab_cost'] = 'Coûts et transparence';
 $string['tab_generate'] = 'Générer';
 $string['tab_tips'] = 'Conseils de prompts';
+$string['tiny/imageia:use'] = 'Utiliser le générateur d\'images pédagogiques IA';
 $string['tips_do_1'] = 'Préciser le public cible ("for high school students")';
 $string['tips_do_2'] = 'Ajouter "white background, no watermark"';
 $string['tips_do_3'] = 'Mettre le texte attendu entre guillemets';
@@ -185,9 +193,4 @@ $string['topic_geo'] = 'Géographie';
 $string['topic_geom'] = 'Géométrie';
 $string['topic_hist'] = 'Histoire';
 $string['topic_phys'] = 'Physique';
-
-$string['privacy:metadata:openai_api'] = 'Les prompts saisis par l\'utilisateur sont transmis à l\'API OpenAI (https://api.openai.com) pour la génération d\'images. Veuillez consulter la politique de confidentialité d\'OpenAI avant d\'activer ce plugin.';
-$string['privacy:metadata:openai_api:prompt'] = 'Le texte du prompt décrivant l\'image à générer, tel que saisi par l\'utilisateur.';
-$string['tiny/imageia:use'] = "Utiliser le générateur d'images pédagogiques IA";
-$string['prompt_hint'] = 'modifiable avant envoi';
-$string['generating_hint'] = 'Cela prend généralement 15–40 secondes.';
+$string['unexpectedresponse'] = 'Réponse inattendue de l\'API OpenAI.';

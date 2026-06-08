@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026060701;
+$plugin->version   = 2026060720;
 $plugin->requires  = 2023100900;
 $plugin->component = 'tiny_imageia';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.1';
+$plugin->release   = '1.3.2';

@@ -24,15 +24,14 @@
 
 namespace tiny_imageia\external;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->libdir . '/externallib.php');
-require_once($CFG->libdir . '/filelib.php');
-
-use external_api;
-use external_function_parameters;
-use external_single_structure;
-use external_value;
+// Note: require_once($CFG->libdir . '/externallib.php') is intentionally omitted.
+// This plugin targets Moodle 4.3+ (requires = 2023100900), where the External API
+// classes are fully namespaced under core_external and do not require manual inclusion.
+use core_external\external_api;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_value;
+use context;
 use context_system;
 use moodle_exception;
 
@@ -40,10 +39,9 @@ use moodle_exception;
  * External function: tiny_imageia_generate_image
  *
  * Proxies the image generation request to the OpenAI API.
- * The API key is stored server-side and never exposed to the browser.
+ * The API key is stored server-side in Moodle config and is never exposed to the browser.
  */
 class generate_image extends external_api {
-
     /**
      * Describes the parameters for generate_image.
      *
@@ -51,40 +49,55 @@ class generate_image extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'prompt'  => new external_value(PARAM_TEXT,       'Image generation prompt'),
-            'model'   => new external_value(PARAM_ALPHANUMEXT, 'Model name',   VALUE_DEFAULT, 'gpt-image-2'),
-            'quality' => new external_value(PARAM_ALPHA,       'Image quality', VALUE_DEFAULT, 'medium'),
-            'size'    => new external_value(PARAM_ALPHANUMEXT, 'Image size',    VALUE_DEFAULT, '1536x1024'),
+            'prompt' => new external_value(PARAM_TEXT, 'Image generation prompt'),
+            'model' => new external_value(PARAM_TEXT, 'Model name', VALUE_DEFAULT, 'gpt-image-2'),
+            'quality' => new external_value(PARAM_ALPHA, 'Image quality', VALUE_DEFAULT, 'medium'),
+            'size' => new external_value(PARAM_TEXT, 'Image size', VALUE_DEFAULT, '1536x1024'),
+            'contextid' => new external_value(PARAM_INT, 'Editor context id', VALUE_DEFAULT, 0),
         ]);
     }
 
     /**
      * Generate an image via the OpenAI API.
      *
-     * @param  string $prompt  The image description prompt.
-     * @param  string $model   The OpenAI model to use.
-     * @param  string $quality The image quality level.
-     * @param  string $size    The image dimensions.
-     * @return array           Array containing the base64-encoded image data.
+     * The model and size parameters are declared as PARAM_TEXT and validated against
+     * explicit whitelists below, because PARAM_ALPHANUMEXT does not reliably accept
+     * all valid values (e.g. 'auto' for size, or model names containing hyphens and digits
+     * across different Moodle versions).
+     *
+     * @param  string $prompt    The image description prompt.
+     * @param  string $model     The OpenAI model to use.
+     * @param  string $quality   The image quality level.
+     * @param  string $size      The image dimensions.
+     * @param  int    $contextid The editor context id.
+     * @return array             Array containing the base64-encoded image data.
      * @throws moodle_exception
      */
-    public static function execute(string $prompt, string $model, string $quality, string $size): array {
-        global $CFG;
-
+    public static function execute(
+        string $prompt,
+        string $model,
+        string $quality,
+        string $size,
+        int $contextid = 0
+    ): array {
         // Validate and clean parameters.
         $params = self::validate_parameters(self::execute_parameters(), [
-            'prompt'  => $prompt,
-            'model'   => $model,
-            'quality' => $quality,
-            'size'    => $size,
+            'prompt'    => $prompt,
+            'model'     => $model,
+            'quality'   => $quality,
+            'size'      => $size,
+            'contextid' => $contextid,
         ]);
 
-        // Capability check.
-        $context = context_system::instance();
+        // Capability check in the actual editor context when available.
+        $context = empty($params['contextid'])
+            ? context_system::instance()
+            : context::instance_by_id($params['contextid']);
         self::validate_context($context);
         require_capability('tiny/imageia:use', $context);
 
-        // Whitelist validation.
+        // Whitelist validation — PARAM_TEXT above allows any string,
+        // so we enforce strict allowed values here.
         $allowedmodels    = ['gpt-image-2'];
         $allowedsizes     = ['1024x1024', '1536x1024', '1024x1536', 'auto'];
         $allowedqualities = ['low', 'medium', 'high'];
@@ -118,12 +131,10 @@ class generate_image extends external_api {
         ]);
 
         // Call the OpenAI API using Moodle's curl wrapper.
-        if (class_exists('\\core\\curl')) {
-            $curl = new \core\curl();
-        } else {
-            $curl = new \curl();
-        }
-
+        // \curl is defined in lib/filelib.php — require it explicitly to guarantee availability.
+        global $CFG;
+        require_once($CFG->libdir . '/filelib.php');
+        $curl = new \curl();
         $curl->setHeader([
             'Content-Type: application/json',
             'Authorization: Bearer ' . $apikey,
@@ -153,17 +164,39 @@ class generate_image extends external_api {
             throw new moodle_exception('unexpectedresponse', 'tiny_imageia');
         }
 
-        return ['data' => json_encode($decoded['data'])];
+        // Extract only the necessary fields to avoid double JSON-encoding the full
+        // OpenAI response (which would cause unterminated JSON errors in the browser
+        // due to the large base64 image payload being re-serialised by Moodle's AJAX layer).
+        $imagedata = $decoded['data'][0];
+        return [
+            'b64_json'       => $imagedata['b64_json'] ?? '',
+            'revised_prompt' => $imagedata['revised_prompt'] ?? '',
+        ];
     }
 
     /**
      * Describes the return value of generate_image.
      *
+     * The data field uses PARAM_RAW because it contains a JSON-encoded string
+     * produced server-side from the OpenAI API response. Cleaning it with any
+     * other PARAM type would corrupt the JSON structure. The value is never
+     * rendered as HTML without being parsed first in JavaScript.
+     *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'data' => new external_value(PARAM_RAW, 'JSON-encoded array of image data objects from OpenAI'),
+            'b64_json' => new external_value(
+                PARAM_RAW,
+                'Base64-encoded PNG image data returned by the OpenAI API. ' .
+                'PARAM_RAW is required because base64 strings contain characters ' .
+                'that would be corrupted by any cleaning filter.'
+            ),
+            'revised_prompt' => new external_value(
+                PARAM_TEXT,
+                'The revised prompt used by the model, if available.',
+                VALUE_OPTIONAL
+            ),
         ]);
     }
 }

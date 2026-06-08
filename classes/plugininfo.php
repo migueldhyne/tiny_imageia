@@ -76,7 +76,10 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
         array $fpoptions,
         ?editor $editor = null
     ): bool {
-        return true;
+        // Only show the button to users who have the tiny/imageia:use capability
+        // in the current editor context. This hides the button for users who
+        // would not be able to generate images anyway.
+        return has_capability('tiny/imageia:use', $context);
     }
 
     /**
@@ -96,11 +99,9 @@ class plugininfo extends plugin implements plugin_with_buttons, plugin_with_conf
         array $fpoptions,
         ?editor $editor = null
     ): array {
-        global $CFG;
-        $configured = !empty(get_config('tiny_imageia', 'apikey'));
         return [
-            'configured' => $configured ? '1' : '0',
-            'proxyurl'   => $CFG->wwwroot . '/lib/editor/tiny/plugins/imageia/generate.php',
+            'configured' => !empty(get_config('tiny_imageia', 'apikey')) ? '1' : '0',
+            'contextid' => (string) $context->id,
         ];
     }
 }

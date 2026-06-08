@@ -25,11 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings->add(new admin_setting_configtext(
+    $settings->add(new admin_setting_configpasswordunmask(
         'tiny_imageia/apikey',
         get_string('apikey', 'tiny_imageia'),
         get_string('apikey_desc', 'tiny_imageia'),
-        '',
-        PARAM_TEXT
+        ''
     ));
 }

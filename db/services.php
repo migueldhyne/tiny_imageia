@@ -32,6 +32,5 @@ $functions = [
         'type'          => 'write',
         'ajax'          => true,
         'loginrequired' => true,
-        'capabilities'  => 'tiny/imageia:use',
     ],
 ];
