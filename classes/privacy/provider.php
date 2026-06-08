@@ -24,22 +24,40 @@
 
 namespace tiny_imageia\privacy;
 
-use core_privacy\local\metadata\null_provider;
+use core_privacy\local\metadata\collection;
+use core_privacy\local\request\data_provider;
 
 /**
- * Privacy provider class — this plugin stores no personal data.
+ * Privacy provider for tiny_imageia.
+ *
+ * This plugin transmits user-supplied prompts to the OpenAI API
+ * (https://api.openai.com) in order to generate images.
+ * No data is stored locally by this plugin.
  *
  * @package    tiny_imageia
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements null_provider {
+class provider implements
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\data_provider {
+
     /**
-     * Returns the reason why this plugin stores no personal data.
+     * Returns metadata about data transmitted to external services.
      *
-     * @return string
+     * @param collection $collection The initialised collection to add items to.
+     * @return collection A listing of user data stored through this system.
      */
-    public static function get_reason(): string {
-        return 'privacy:metadata';
+    public static function get_metadata(collection $collection): collection {
+        // Declare that user-supplied prompt text is sent to the OpenAI API.
+        $collection->add_external_location_link(
+            'openai_api',
+            [
+                'prompt' => 'privacy:metadata:openai_api:prompt',
+            ],
+            'privacy:metadata:openai_api'
+        );
+
+        return $collection;
     }
 }

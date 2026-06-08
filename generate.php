@@ -30,7 +30,11 @@ require_once($CFG->libdir . '/filelib.php');
 require_login();
 header('Content-Type: application/json; charset=utf-8');
 
-$sesskey = optional_param('sesskey', '', PARAM_RAW);
+// Verify the user has the capability to use this plugin (system context).
+$context = \context_system::instance();
+require_capability('tiny/imageia:use', $context);
+
+$sesskey = optional_param('sesskey', '', PARAM_ALPHANUM);
 if (!confirm_sesskey($sesskey)) {
     http_response_code(403);
     die(json_encode(['error' => 'Invalid session key.']));
@@ -48,9 +52,9 @@ if (!is_array($body) || empty($body['prompt'])) {
 }
 
 $prompt = clean_param($body['prompt'], PARAM_TEXT);
-$model = clean_param($body['model'] ?? 'gpt-image-2', PARAM_RAW);
+$model = clean_param($body['model'] ?? 'gpt-image-2', PARAM_ALPHANUMEXT);
 $quality = clean_param($body['quality'] ?? 'medium', PARAM_ALPHA);
-$size = clean_param($body['size'] ?? '1536x1024', PARAM_RAW);
+$size = clean_param($body['size'] ?? '1536x1024', PARAM_ALPHANUMEXT);
 
 $allowedmodels = ['gpt-image-2'];
 $allowedsizes = ['1024x1024', '1536x1024', '1024x1536', 'auto'];

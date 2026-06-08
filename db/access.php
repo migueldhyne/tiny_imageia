@@ -1,3 +1,4 @@
+<?php
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,22 +15,23 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Options for the tiny_imageia plugin.
+ * Capability definitions for tiny_imageia plugin.
  *
- * @module     tiny_imageia/options
+ * @package    tiny_imageia
  * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import {getPluginOptionName} from 'editor_tiny/options';
-import {pluginName} from './common';
 
-const proxyUrlOptionName = getPluginOptionName(pluginName, 'proxyurl');
-const configuredOptionName = getPluginOptionName(pluginName, 'configured');
+defined('MOODLE_INTERNAL') || die();
 
-export const register = (editor) => {
-    editor.options.register(proxyUrlOptionName, {processor: 'string'});
-    editor.options.register(configuredOptionName, {processor: 'string'});
-};
-
-export const getProxyUrl = (editor) => editor.options.get(proxyUrlOptionName) || '';
-export const isConfigured = (editor) => editor.options.get(configuredOptionName) === '1';
+$capabilities = [
+    'tiny/imageia:use' => [
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => [
+            'teacher'        => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager'        => CAP_ALLOW,
+        ],
+    ],
+];

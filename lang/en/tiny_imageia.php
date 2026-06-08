@@ -185,3 +185,9 @@ $string['topic_geo'] = 'Geography';
 $string['topic_geom'] = 'Geometry';
 $string['topic_hist'] = 'History';
 $string['topic_phys'] = 'Physics';
+
+$string['privacy:metadata:openai_api'] = 'User-supplied image prompts are transmitted to the OpenAI API (https://api.openai.com) for image generation. Please review OpenAI\'s privacy policy before enabling this plugin.';
+$string['privacy:metadata:openai_api:prompt'] = 'The text prompt describing the image to generate, as entered by the user.';
+$string['tiny/imageia:use'] = 'Use the Pedagogical AI Image generator';
+$string['prompt_hint'] = 'editable before sending';
+$string['generating_hint'] = 'This usually takes 15–40 seconds.';

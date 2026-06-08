@@ -1,9 +1,33 @@
-// tiny_imageia/amd/src/plugin.js
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * TinyMCE plugin for pedagogical AI image generation via OpenAI.
+ *
+ * @module     tiny_imageia/plugin
+ * @copyright  2026 Miguël Dhyne <miguel.dhyne@gmail.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 import {getTinyMCE} from 'editor_tiny/loader';
 import {getPluginMetadata} from 'editor_tiny/utils';
 import {component, pluginName, buttonName, menuItemName} from './common';
 import {register as registerOptions, getProxyUrl, isConfigured} from './options';
 import * as Configuration from './configuration';
+import {get_strings as getStrings} from 'core/str';
+import Ajax from 'core/ajax';
+import Templates from 'core/templates';
 
 // ─── Données des modèles ──────────────────────────────────────────────────────
 const MODEL_INFO = {
@@ -343,6 +367,9 @@ function buildTipsTab() {
 
 // ─── HTML de la modale complète avec onglets ──────────────────────────────────
 function buildModalHTML() {
+  // Note: buildModalHTML is kept for reference but openImageIADialog
+  // now uses Templates.renderForPromise('tiny_imageia/modal') instead.
+  const promptPlaceholder = '';  // placeholder handled by mustache template
   const tabStyle = (active) => `
     padding:9px 18px;border:none;border-bottom:3px solid ${active ? '#7c3aed' : 'transparent'};
     background:none;cursor:pointer;font-size:.87rem;font-weight:${active ? '700' : '500'};
@@ -410,7 +437,7 @@ function buildModalHTML() {
             ✏️ Prompt <span style="font-weight:400;color:#9ca3af;">(modifiable avant envoi)</span>
           </label>
           <textarea id="imageia-prompt" rows="4"
-            placeholder="Décrivez l'image souhaitée : sujet, public cible, style visuel, couleurs, contraintes…"
+            placeholder="${promptPlaceholder}"
             style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;
                    font-size:.86rem;resize:vertical;box-sizing:border-box;line-height:1.6;color:#111;"></textarea>
 
@@ -496,9 +523,22 @@ function buildImageRequest(model, prompt, size, quality) {
     return request;
 }
 
-function openImageIADialog(editor, proxyUrl, configured) {
+async function openImageIADialog(editor, proxyUrl, configured) {
   const wrapper = document.createElement('div');
-  wrapper.innerHTML = buildModalHTML();
+  // Fetch the localised placeholder string for the template context.
+  const [{string: promptPlaceholder}] = await getStrings([{key: 'prompt_placeholder', component: 'tiny_imageia'}]);
+  const templateContext = {
+    promptplaceholder: promptPlaceholder,
+    bankoptions:       buildBankOptions(),
+    modelcard:         buildModelCard('gpt-image-2'),
+    sizeoptions:       buildSizeOptions('gpt-image-2'),
+    qualityoptions:    buildQualityOptions('gpt-image-2'),
+    modeltip:          MODEL_INFO['gpt-image-2'].tip,
+    costtab:           buildCostTab(),
+    tipstab:           buildTipsTab(),
+  };
+  const {html, js} = await Templates.renderForPromise('tiny_imageia/modal', templateContext);
+  Templates.appendNodeContents(wrapper, html, js);
   document.body.appendChild(wrapper);
 
   const $ = id => document.getElementById(id);
@@ -668,36 +708,24 @@ function openImageIADialog(editor, proxyUrl, configured) {
     genBtn.textContent        = '⏳ Génération en cours…';
 
     try {
-      const sesskey = (typeof M !== 'undefined' && M.cfg) ? M.cfg.sesskey : '';
-      const resp = await fetch(proxyUrl + '?sesskey=' + sesskey, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(buildImageRequest(m, prompt, size, quality)),
-      });
-      const rawText = await resp.text();
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (e) {
-        throw new Error('Réponse serveur HTTP ' + resp.status + ' : ' + rawText.substring(0, 400));
-      }
-      if (!resp.ok) {
-        const serverMessage = (data && data.error && typeof data.error === 'object' && data.error.message)
-          ? data.error.message
-          : (data && typeof data.error === 'string')
-            ? data.error
-            : `Erreur API ${resp.status}`;
-        const hint = data && data.hint ? ' — ' + data.hint : '';
-        const raw = data && data.raw ? ' | ' + data.raw.substring(0, 300) : '';
-        throw new Error(serverMessage + hint + raw);
-      }
+      const request = buildImageRequest(m, prompt, size, quality);
+      const result = await Ajax.call([{
+        methodname: 'tiny_imageia_generate_image',
+        args: {
+          prompt:  request.prompt,
+          model:   request.model,
+          quality: request.quality,
+          size:    request.size,
+        },
+      }])[0];
 
-      const src = `data:image/png;base64,${data.data[0].b64_json}`;
+      const imageData = JSON.parse(result.data);
+      const src = `data:image/png;base64,${imageData[0].b64_json}`;
       imgEl.src = src; imgEl.style.display = 'block';
       downloadA.href = src;
       actionsDiv.style.display = 'flex';
 
-      const rev = data.data[0].revised_prompt;
+      const rev = imageData[0].revised_prompt;
       if (rev) {
         promptUsed.style.display = 'block';
         promptUsed.textContent = `Prompt interprété : "${rev.substring(0, 140)}…"`;

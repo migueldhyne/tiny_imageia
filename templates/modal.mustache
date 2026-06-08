@@ -1,0 +1,175 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    Modal dialog template for the tiny_imageia plugin.
+
+    @template     tiny_imageia/modal
+    @copyright    2026 Miguël Dhyne <miguel.dhyne@gmail.com>
+    @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+    Context variables required by this template:
+    * promptplaceholder {String}  Localised placeholder for the prompt textarea
+    * bankoptions        {String}  HTML option elements for the prompt bank select (safe, server-generated)
+    * modelcard         {String}  HTML for the model info card
+    * sizeoptions       {String}  HTML option elements for the size select
+    * qualityoptions    {String}  HTML option elements for the quality select
+    * modeltip          {String}  HTML tip text for the selected model
+    * costtab           {String}  HTML for the Costs tab content
+    * tipstab           {String}  HTML for the Tips tab content
+
+    Example context (json):
+    {
+        "promptplaceholder": "Describe the desired image...",
+        "bankoptions": "<option value=''>Select a prompt</option>",
+        "modelcard": "<div>Model info</div>",
+        "sizeoptions": "<option value='1024x1024'>Square</option>",
+        "qualityoptions": "<option value='medium'>Medium</option>",
+        "modeltip": "<strong>Tip:</strong> Use medium quality.",
+        "costtab": "<div>Cost info</div>",
+        "tipstab": "<div>Tips content</div>"
+    }
+}}
+<div id="imageia-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="background:#fff;border-radius:14px;padding:0;width:720px;max-width:96vw;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 16px 56px rgba(0,0,0,.35);">
+
+    <div style="padding:22px 28px 0;flex-shrink:0;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0;font-size:1.15rem;color:#111;">{{#str}} dialog_title, tiny_imageia {{/str}}</h2>
+          <p style="margin:3px 0 0;font-size:.77rem;color:#9ca3af;">{{#str}} dialog_subtitle, tiny_imageia {{/str}}</p>
+        </div>
+        <button id="imageia-close" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:#9ca3af;padding:0;line-height:1;" aria-label="{{#str}} close, core {{/str}}">✕</button>
+      </div>
+
+      <div style="display:flex;border-bottom:1px solid #e5e7eb;margin:0 -28px;padding:0 28px;overflow-x:auto;" role="tablist">
+        <button id="tab-btn-generate" role="tab" aria-selected="true" aria-controls="tab-generate" data-tab="generate"
+          style="padding:9px 18px;border:none;border-bottom:3px solid #7c3aed;background:none;cursor:pointer;font-size:.87rem;font-weight:700;color:#7c3aed;white-space:nowrap;">
+          {{#str}} tab_generate, tiny_imageia {{/str}}
+        </button>
+        <button id="tab-btn-cost" role="tab" aria-selected="false" aria-controls="tab-cost" data-tab="cost"
+          style="padding:9px 18px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-size:.87rem;font-weight:500;color:#6b7280;white-space:nowrap;">
+          {{#str}} tab_cost, tiny_imageia {{/str}}
+        </button>
+        <button id="tab-btn-tips" role="tab" aria-selected="false" aria-controls="tab-tips" data-tab="tips"
+          style="padding:9px 18px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-size:.87rem;font-weight:500;color:#6b7280;white-space:nowrap;">
+          {{#str}} tab_tips, tiny_imageia {{/str}}
+        </button>
+      </div>
+    </div>
+
+    <div style="padding:20px 28px 24px;overflow-y:auto;flex:1;">
+
+      <div id="tab-generate" role="tabpanel" aria-labelledby="tab-btn-generate">
+
+        <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:8px;">{{#str}} model_label, tiny_imageia {{/str}}</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <label id="lbl-gpt2" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:2px solid #7c3aed;border-radius:8px;cursor:pointer;background:#faf5ff;">
+            <input type="radio" name="imageia-model" value="gpt-image-2" checked>
+            <div>
+              <div style="font-weight:700;color:#7c3aed;font-size:.88rem;">gpt-image-2
+                <span style="background:#7c3aed;color:#fff;font-size:.64rem;padding:1px 6px;border-radius:99px;margin-left:4px;">{{#str}} model_badge, tiny_imageia {{/str}}</span>
+              </div>
+              <div style="font-size:.74rem;color:#6b7280;">{{#str}} model_sub, tiny_imageia {{/str}}</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="imageia-model-card" style="margin-bottom:14px;">{{{modelcard}}}</div>
+        <hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 14px;">
+
+        <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:6px;">{{#str}} prompt_bank_label, tiny_imageia {{/str}}</label>
+        <select id="imageia-bank" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:.86rem;margin-bottom:12px;color:#374151;"
+          aria-label="{{#str}} prompt_bank_label, tiny_imageia {{/str}}">
+          {{{bankoptions}}}
+        </select>
+
+        <label style="font-weight:700;font-size:.87rem;color:#374151;display:block;margin-bottom:6px;" for="imageia-prompt">
+          {{#str}} prompt_label, tiny_imageia {{/str}}
+          <span style="font-weight:400;color:#9ca3af;">({{#str}} prompt_hint, tiny_imageia {{/str}})</span>
+        </label>
+        <textarea id="imageia-prompt" rows="4"
+          placeholder="{{promptplaceholder}}"
+          style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:7px;font-size:.86rem;resize:vertical;box-sizing:border-box;line-height:1.6;color:#111;"
+          aria-label="{{#str}} prompt_label, tiny_imageia {{/str}}"></textarea>
+
+        <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:150px;">
+            <label style="font-size:.82rem;color:#374151;font-weight:700;display:block;margin-bottom:4px;" for="imageia-size">
+              {{#str}} size_label, tiny_imageia {{/str}}
+            </label>
+            <select id="imageia-size" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:.82rem;">
+              {{{sizeoptions}}}
+            </select>
+          </div>
+          <div style="flex:1;min-width:150px;">
+            <label style="font-size:.82rem;color:#374151;font-weight:700;display:block;margin-bottom:4px;" for="imageia-quality">
+              {{#str}} quality_label, tiny_imageia {{/str}}
+            </label>
+            <select id="imageia-quality" style="width:100%;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;font-size:.82rem;">
+              {{{qualityoptions}}}
+            </select>
+          </div>
+          <div id="cost-estimate-box" style="flex:0 0 auto;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:7px;padding:7px 12px;text-align:center;">
+            <div style="font-size:.7rem;color:#7c3aed;font-weight:600;">{{#str}} cost_label, tiny_imageia {{/str}}</div>
+            <div id="cost-estimate-value" style="font-size:1rem;font-weight:700;color:#7c3aed;">≈ 0,053 $</div>
+            <div style="font-size:.66rem;color:#9ca3af;">{{#str}} cost_per_image, tiny_imageia {{/str}}</div>
+          </div>
+        </div>
+
+        <div id="imageia-tip" style="background:#f5f3ff;border-left:4px solid #7c3aed;border-radius:5px;padding:10px 14px;margin-top:12px;font-size:.8rem;color:#374151;line-height:1.55;">
+          {{{modeltip}}}
+        </div>
+
+        <button id="imageia-generate" style="margin-top:14px;width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;border-radius:9px;font-size:.98rem;font-weight:700;cursor:pointer;letter-spacing:.01em;">
+          {{#str}} generate_btn, tiny_imageia {{/str}}
+        </button>
+
+        <div id="imageia-result" style="margin-top:18px;display:none;text-align:center;">
+          <div id="imageia-loading" style="display:none;padding:24px;">
+            <div style="font-size:1.8rem;margin-bottom:6px;">⏳</div>
+            <div id="loading-model-label" style="color:#7c3aed;font-weight:700;font-size:.93rem;">{{#str}} generating, tiny_imageia {{/str}}</div>
+            <div style="color:#9ca3af;font-size:.8rem;margin-top:4px;">{{#str}} generating_hint, tiny_imageia {{/str}}</div>
+          </div>
+          <div id="imageia-error" style="display:none;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;padding:12px 14px;border-radius:7px;margin-bottom:12px;text-align:left;font-size:.86rem;line-height:1.5;" role="alert"></div>
+          <img id="imageia-img" style="max-width:100%;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.18);display:none;" alt="{{#str}} img_alt, tiny_imageia {{/str}}"/>
+          <div id="imageia-prompt-used" style="display:none;margin-top:8px;font-size:.76rem;color:#9ca3af;font-style:italic;text-align:left;padding:0 4px;"></div>
+          <div id="imageia-actions" style="display:none;margin-top:12px;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button id="imageia-insert" style="padding:10px 20px;background:#10b981;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-size:.88rem;">
+              {{#str}} insert_btn, tiny_imageia {{/str}}
+            </button>
+            <a id="imageia-download" download="image-pedagogique-ia.png" style="padding:10px 20px;background:#6366f1;color:#fff;border-radius:7px;text-decoration:none;font-weight:700;font-size:.88rem;display:inline-block;">
+              {{#str}} download_btn, tiny_imageia {{/str}}
+            </a>
+            <button id="imageia-regenerate" style="padding:10px 20px;background:#f9fafb;color:#374151;border:1px solid #d1d5db;border-radius:7px;cursor:pointer;font-weight:600;font-size:.88rem;">
+              {{#str}} regen_btn, tiny_imageia {{/str}}
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="tab-cost" role="tabpanel" aria-labelledby="tab-btn-cost" style="display:none;">
+        {{{costtab}}}
+      </div>
+
+      <div id="tab-tips" role="tabpanel" aria-labelledby="tab-btn-tips" style="display:none;">
+        {{{tipstab}}}
+      </div>
+
+    </div>
+  </div>
+</div>
